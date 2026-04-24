@@ -590,28 +590,6 @@ async function initApp(){
   document.getElementById('sp-inp-date').value = todayStr();
   document.getElementById('hrv-inp-date').value= todayStr();
 
-  // Inject historical weight data if bin is empty
-  if(BIN_DATA.weights.length === 0){
-    BIN_DATA.weights = [
-      {date:'2026-01-07',weight:101.5,note:''},{date:'2026-01-12',weight:99.5,note:''},
-      {date:'2026-01-14',weight:99.0,note:''},{date:'2026-01-16',weight:98.5,note:'départ suivi'},
-      {date:'2026-01-22',weight:99.0,note:''},{date:'2026-01-25',weight:98.5,note:''},
-      {date:'2026-01-28',weight:98.5,note:''},{date:'2026-02-01',weight:98.8,note:''},
-      {date:'2026-02-04',weight:98.5,note:''},{date:'2026-02-08',weight:97.8,note:''},
-      {date:'2026-02-11',weight:98.2,note:''},{date:'2026-02-14',weight:97.5,note:''},
-      {date:'2026-02-18',weight:97.2,note:''},{date:'2026-02-22',weight:97.0,note:''},
-      {date:'2026-02-25',weight:97.2,note:''},{date:'2026-03-01',weight:97.0,note:''},
-      {date:'2026-03-05',weight:97.3,note:''},{date:'2026-03-08',weight:97.0,note:''},
-      {date:'2026-03-14',weight:96.8,note:''},{date:'2026-03-18',weight:97.5,note:''},
-      {date:'2026-03-22',weight:97.3,note:''},{date:'2026-03-25',weight:97.0,note:''},
-      {date:'2026-03-28',weight:97.2,note:''},{date:'2026-04-01',weight:97.5,note:''},
-      {date:'2026-04-02',weight:98.0,note:'35 ans 🎂'},{date:'2026-04-05',weight:98.0,note:''},
-      {date:'2026-04-10',weight:97.8,note:''},{date:'2026-04-15',weight:97.5,note:''},
-      {date:'2026-04-19',weight:97.3,note:''},{date:'2026-04-22',weight:98.5,note:''},
-    ];
-    await binSave();
-  }
-
   wRender(); nRender(); spRender();
 }
 
@@ -868,41 +846,91 @@ function corosImport(input){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
-      const lines=e.target.result.split('\n').filter(l=>l.trim());
-      const header=lines[0].toLowerCase();
-      let parsed=null;
-      if(header.includes('distance')||header.includes('duration')||header.includes('heart rate')){
-        for(let i=1;i<lines.length;i++){
-          const cols=lines[i].split(',');
-          if(cols.length<4) continue;
-          const dateRaw=cols[0]?.trim();
-          const distRaw=parseFloat(cols[1])||0;
-          const durRaw=parseInt(cols[2])||0;
-          const fcmRaw=parseInt(cols[3])||0;
-          const fcxRaw=parseInt(cols[4])||0;
-          if(dateRaw&&(distRaw||durRaw)){
-            let dateStr=todayStr();
-            const dm=dateRaw.match(/(\d{4}[-/]\d{2}[-/]\d{2})/);
-            if(dm) dateStr=dm[1].replace(/\//g,'-');
-            parsed={date:dateStr,km:distRaw,dur:Math.round(durRaw/60),fcm:fcmRaw,fcx:fcxRaw};
-            break;
-          }
+      // Parse CSV respecting quoted fields
+      function parseCSVLine(line){
+        const result=[];
+        let cur='', inQ=false;
+        for(let i=0;i<line.length;i++){
+          const c=line[i];
+          if(c==='"'){ inQ=!inQ; }
+          else if(c===','&&!inQ){ result.push(cur.trim()); cur=''; }
+          else cur+=c;
         }
+        result.push(cur.trim());
+        return result;
       }
-      if(parsed){
-        let z={z1:0,z2:0,z3:0,z4:0,z5:0};
-        if(parsed.fcm>0){
-          if(parsed.fcm<134)      z={z1:80,z2:15,z3:5,z4:0,z5:0};
-          else if(parsed.fcm<152) z={z1:20,z2:65,z3:10,z4:5,z5:0};
-          else if(parsed.fcm<161) z={z1:5,z2:30,z3:50,z4:12,z5:3};
-          else if(parsed.fcm<171) z={z1:5,z2:15,z3:25,z4:45,z5:10};
-          else                    z={z1:5,z2:10,z3:15,z4:25,z5:45};
-        }
-        BIN_DATA.sport.push({id:Date.now(),date:parsed.date,type:'run',km:parsed.km,dur:parsed.dur,fcm:parsed.fcm,fcx:parsed.fcx,rpe:0,note:'Import COROS',...z});
-        binSave(); spRender();
-        msgEl.style.color='var(--green)'; msgEl.textContent=`✓ ${parsed.km} km · ${parsed.dur} min`;
-      } else { msgEl.style.color='var(--red)'; msgEl.textContent='Format non reconnu.'; }
-    }catch(err){ msgEl.style.color='var(--red)'; msgEl.textContent='Erreur de lecture.'; }
+
+      const lines=e.target.result.split('\n').filter(l=>l.trim());
+      if(lines.length<2){ throw new Error('Fichier vide'); }
+
+      // Parse header to find column indices
+      const header=parseCSVLine(lines[0]).map(h=>h.toLowerCase());
+      const idx={
+        split:    header.findIndex(h=>h.includes('split')),
+        time:     header.findIndex(h=>h==='time'),
+        dist:     header.findIndex(h=>h.includes('distance')||h.includes('getdistance')),
+        fcm:      header.findIndex(h=>h.includes('avg hr')||h.includes('avg heart')),
+        fcx:      header.findIndex(h=>h.includes('max hr')||h.includes('max heart')),
+        cal:      header.findIndex(h=>h.includes('calorie')),
+      };
+
+      // Find Summary line — fallback to last data line
+      let summaryLine = null;
+      for(let i=1;i<lines.length;i++){
+        const cols=parseCSVLine(lines[i]);
+        if(cols[0]&&cols[0].toLowerCase()==='summary'){ summaryLine=cols; break; }
+      }
+      // If no Summary line, aggregate all splits
+      if(!summaryLine){
+        // use last line as best guess
+        summaryLine=parseCSVLine(lines[lines.length-1]);
+      }
+
+      // Parse duration HH:MM:SS → minutes
+      function parseDur(s){
+        if(!s) return 0;
+        const parts=s.trim().split(':').map(Number);
+        if(parts.length===3) return parts[0]*60+parts[1]+Math.round(parts[2]/60);
+        if(parts.length===2) return parts[0]+Math.round(parts[1]/60);
+        return parseInt(s)||0;
+      }
+
+      const km   = idx.dist>=0  ? parseFloat(summaryLine[idx.dist])||0  : 0;
+      const dur  = idx.time>=0  ? parseDur(summaryLine[idx.time])        : 0;
+      const fcm  = idx.fcm>=0   ? parseInt(summaryLine[idx.fcm])||0      : 0;
+      const fcx  = idx.fcx>=0   ? parseInt(summaryLine[idx.fcx])||0      : 0;
+
+      if(!km && !dur) throw new Error('Données introuvables');
+
+      // Auto-estimate zones from avg HR (Karvonen: FCR=52, FCmax=192)
+      let z={z1:0,z2:0,z3:0,z4:0,z5:0};
+      if(fcm>0){
+        if(fcm<134)      z={z1:80,z2:15,z3:5, z4:0, z5:0};
+        else if(fcm<152) z={z1:20,z2:65,z3:10,z4:5, z5:0};
+        else if(fcm<161) z={z1:5, z2:30,z3:50,z4:12,z5:3};
+        else if(fcm<171) z={z1:5, z2:15,z3:25,z4:45,z5:10};
+        else             z={z1:5, z2:10,z3:15,z4:25,z5:45};
+      }
+
+      // Use file modification date as session date
+      const dateStr = file.lastModified
+        ? new Date(file.lastModified).toISOString().slice(0,10)
+        : todayStr();
+
+      BIN_DATA.sport.push({
+        id:Date.now(), date:dateStr, type:'run',
+        km, dur, fcm, fcx, rpe:0,
+        note:`Import COROS — ${file.name}`,
+        ...z
+      });
+      binSave(); spRender();
+      msgEl.style.color='var(--green)';
+      msgEl.textContent=`✓ ${km.toFixed(2)} km · ${dur} min · FC moy ${fcm||'—'}`;
+
+    }catch(err){
+      msgEl.style.color='var(--red)';
+      msgEl.textContent='Erreur : '+err.message;
+    }
     input.value='';
   };
   reader.readAsText(file);
