@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Santé — G.</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0f0e; --surface:#181817; --surface2:#1e1e1c; --border:#2a2a28;
+  --text:#e8e6e0; --muted:#7a7870;
+  --gold:#c8b560; --green:#6db388; --red:#c46b6b; --amber:#d4924a; --blue:#4a8fc4;
+  --kcal:#c4622d; --prot:#6db388; --gluc:#d4924a; --lip:#9b7ec8;
+  --z1:#4a8fc4; --z2:#6db388; --z3:#d4924a; --z4:#c46b6b; --z5:#9b7ec8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;min-height:100vh;}
+
+/* ── CONFIG OVERLAY ─────────────────────────────────────────── */
+#config-overlay {
+  position:fixed;inset:0;background:var(--bg);z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.config-box {
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:36px;max-width:480px;width:100%;
+}
+.config-box h2 {
+  font-family:'Fraunces',serif;font-size:28px;font-weight:300;margin-bottom:6px;
+}
+.config-box h2 em{color:var(--gold);font-style:italic;}
+.config-subtitle{color:var(--muted);font-size:11px;line-height:1.8;margin-bottom:28px;}
+.config-field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.config-field label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.config-field input{
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;
+  transition:border-color .15s;
+}
+.config-field input:focus{border-color:var(--gold);}
+.config-field .hint{font-size:10px;color:var(--muted);line-height:1.6;}
+.config-actions{display:flex;gap:10px;margin-top:24px;align-items:center;}
+.config-error{color:var(--red);font-size:11px;margin-top:8px;min-height:16px;}
+.config-note{font-size:10px;color:var(--muted);margin-top:20px;padding-top:16px;border-top:1px solid var(--border);line-height:1.8;}
+
+/* ── SYNC INDICATOR ─────────────────────────────────────────── */
+#sync-bar{
+  position:fixed;bottom:0;left:0;right:0;height:2px;background:var(--gold);
+  transform:scaleX(0);transform-origin:left;transition:transform .3s,opacity .5s;
+  opacity:0;z-index:500;
+}
+#sync-bar.syncing{opacity:1;animation:syncpulse 1s ease-in-out infinite;}
+#sync-bar.done{transform:scaleX(1);opacity:1;}
+#sync-bar.error{background:var(--red);transform:scaleX(1);opacity:1;}
+@keyframes syncpulse{0%,100%{transform:scaleX(0.3);opacity:.6;}50%{transform:scaleX(0.7);opacity:1;}}
+
+#sync-status{
+  position:fixed;bottom:10px;right:16px;font-size:10px;color:var(--muted);
+  z-index:500;transition:opacity .5s;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────────────── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:20px 32px 0;max-width:900px;margin:0 auto;}
+.brand{font-family:'Fraunces',serif;font-size:22px;font-weight:300;letter-spacing:-0.5px;}
+.brand em{color:var(--gold);font-style:italic;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.topbar-meta{font-size:10px;color:var(--muted);text-align:right;line-height:1.9;}
+.btn-settings{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-size:14px;padding:3px 8px;transition:all .15s;}
+.btn-settings:hover{border-color:var(--text);color:var(--text);}
+
+/* ── TABS ───────────────────────────────────────────────────── */
+.tabs-wrap{max-width:900px;margin:18px auto 0;padding:0 32px;}
+.tabs{display:flex;border-bottom:1px solid var(--border);}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:11px 22px 9px;margin-bottom:-1px;transition:color .15s,border-color .15s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--gold);}
+.tab-btn.active.nt{border-bottom-color:var(--green);}
+.tab-btn.active.sp{border-bottom-color:var(--blue);}
+
+/* ── PANELS ─────────────────────────────────────────────────── */
+.panel{display:none;max-width:900px;margin:0 auto;padding:26px 32px 60px;}
+.panel.active{display:block;}
+
+/* ── SHARED ─────────────────────────────────────────────────── */
+.sec-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;}
+.empty-state{padding:34px 20px;text-align:center;color:var(--muted);font-size:12px;font-style:italic;line-height:2;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.field input,.field select{background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:8px 11px;outline:none;transition:border-color .15s;}
+.field input:focus,.field select:focus{border-color:var(--blue);}
+.field select option{background:var(--bg);}
+.btn{border:none;border-radius:5px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:8px 18px;transition:opacity .15s,transform .1s;white-space:nowrap;letter-spacing:.03em;}
+.btn:hover{opacity:.85;} .btn:active{transform:scale(.97);} .btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-gold{background:var(--gold);color:#0f0f0e;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-green{background:var(--green);color:#0f0f0e;}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--red);color:var(--red);}
+.msg-ok{color:var(--green);font-size:11px;} .msg-err{color:var(--red);font-size:11px;}
+
+/* ── POIDS ──────────────────────────────────────────────────── */
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.stat-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;}
+.stat-val{font-family:'Fraunces',serif;font-size:26px;font-weight:600;line-height:1;color:var(--text);}
+.stat-val.gold{color:var(--gold);}
+.stat-sub{color:var(--muted);font-size:10px;margin-top:5px;}
+.trend-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:500;margin-top:4px;}
+.tb-good{background:#6db38820;color:var(--green);} .tb-warn{background:#d4924a20;color:var(--amber);}
+.tb-bad{background:#c46b6b20;color:var(--red);}
+.prog-wrap{margin-bottom:22px;}
+.prog-outer{background:var(--surface2);border:1px solid var(--border);border-radius:100px;height:7px;overflow:hidden;margin-top:7px;}
+.prog-inner{height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:100px;transition:width .5s;}
+.prog-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:4px;}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:22px;}
+.chart-head{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.legend{display:flex;gap:12px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);}
+.ld{width:8px;height:8px;border-radius:50%;} .ll{width:14px;height:2px;}
+canvas{width:100%;display:block;}
+.entry-sec{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:22px;}
+.entry-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.entry-row .field input[type="number"]{width:110px;} .entry-row .field input[type="date"]{width:150px;} .entry-row .field input[type="text"]{width:190px;}
+.hist-sec{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:22px;}
+.hist-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface2);}
+.hist-title{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+table{width:100%;border-collapse:collapse;}
+thead th{color:var(--muted);font-size:10px;font-weight:400;text-transform:uppercase;letter-spacing:.06em;padding:9px 18px;text-align:left;background:var(--surface2);}
+tbody tr{border-top:1px solid var(--border);transition:background .1s;}
+tbody tr:hover{background:var(--surface2);}
+tbody td{padding:9px 18px;font-size:11px;color:var(--text);}
+.td-m{color:var(--muted);} .td-neg{color:var(--green);} .td-pos{color:var(--red);}
+
+/* ── NUTRITION ──────────────────────────────────────────────── */
+.date-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.btn-arrow{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 10px;transition:all .15s;line-height:1.5;}
+.btn-arrow:hover{border-color:var(--text);color:var(--text);}
+#nutri-date-lbl{font-family:'Fraunces',serif;font-size:20px;font-weight:300;font-style:italic;flex:1;}
+input[type="date"].dp{background:none;border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 8px;outline:none;}
+.gauges4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.gauge-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.gauge-card::after{content:'';position:absolute;bottom:0;left:0;height:3px;width:var(--fill,0%);transition:width .4s;}
+.gc-kcal::after{background:var(--kcal);} .gc-prot::after{background:var(--prot);}
+.gc-gluc::after{background:var(--gluc);} .gc-lip::after{background:var(--lip);}
+.g-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:7px;}
+.g-val{font-family:'Fraunces',serif;font-size:28px;font-weight:600;line-height:1;}
+.g-unit{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-left:2px;}
+.g-tgt{font-size:10px;color:var(--muted);margin-top:4px;}
+.g-pct{font-size:10px;font-weight:500;margin-top:3px;}
+.pct-ok{color:var(--green);} .pct-warn{color:var(--amber);} .pct-over{color:var(--red);}
+.ai-entry{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:22px;}
+.ai-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.ai-badge{background:var(--green);color:#0f0f0e;font-size:9px;padding:2px 6px;border-radius:3px;letter-spacing:.06em;font-weight:500;}
+.meal-type-row{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;}
+.meal-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;padding:4px 11px;transition:all .15s;}
+.meal-btn:hover,.meal-btn.active{background:var(--green);border-color:var(--green);color:#0f0f0e;}
+.ai-inp-row{display:flex;gap:9px;align-items:flex-end;}
+.ai-ta{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:9px 11px;outline:none;resize:none;height:56px;transition:border-color .15s;line-height:1.6;}
+.ai-ta:focus{border-color:var(--green);} .ai-ta::placeholder{color:var(--muted);font-style:italic;}
+.st-msg{font-size:11px;margin-top:7px;min-height:15px;font-style:italic;color:var(--muted);}
+.st-msg.err{color:var(--red);font-style:normal;}
+.ai-result{margin-top:12px;background:#6db38812;border:1px solid #6db38830;border-radius:5px;padding:13px 15px;display:none;}
+.ai-result.vis{display:block;}
+.ar-title{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin-bottom:9px;}
+.ar-macros{display:flex;gap:18px;margin-bottom:8px;flex-wrap:wrap;}
+.ar-mac .ar-val{font-size:18px;font-family:'Fraunces',serif;font-weight:600;}
+.ar-mac .ar-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.ar-note{font-size:10px;color:var(--muted);font-style:italic;margin-bottom:11px;line-height:1.6;}
+.ar-actions{display:flex;gap:7px;}
+.meals-sec{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:22px;}
+.meals-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface2);}
+.meal-entry{border-top:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;gap:12px;transition:background .1s;}
+.meal-entry:first-child{border-top:none;} .meal-entry:hover{background:var(--surface2);}
+.mtt{font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:3px 7px;border-radius:3px;white-space:nowrap;min-width:68px;text-align:center;}
+.t-pj{background:#d4924a20;color:var(--gluc);} .t-dej{background:#6db38820;color:var(--prot);}
+.t-col{background:#9b7ec820;color:var(--lip);} .t-din{background:#c4622d20;color:var(--kcal);}
+.t-aut{background:var(--surface2);color:var(--muted);}
+.meal-desc{flex:1;color:var(--text);font-size:11px;line-height:1.5;}
+.meal-macros{display:flex;gap:11px;font-size:11px;color:var(--muted);white-space:nowrap;}
+.mmv{color:var(--text);font-weight:500;}
+.meal-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:3px;transition:color .15s;}
+.meal-del:hover{color:var(--red);}
+.wk-sec{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.wk-bars{display:flex;gap:6px;align-items:flex-end;height:80px;margin-top:12px;}
+.wb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+.wb-out{width:100%;background:var(--surface2);border-radius:3px 3px 0 0;height:54px;display:flex;align-items:flex-end;overflow:hidden;}
+.wb-in{width:100%;border-radius:3px 3px 0 0;transition:height .4s;}
+.wb-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;}
+.wb-val{font-size:9px;color:var(--muted);}
+
+/* ── SPORT ──────────────────────────────────────────────────── */
+.sp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.sp-kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.sp-kpi::after{content:'';position:absolute;bottom:0;left:0;height:3px;width:var(--fill,0%);background:var(--blue);}
+.acwr-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:500;margin-top:4px;}
+.ab-ok{background:#6db38820;color:var(--green);} .ab-warn{background:#d4924a20;color:var(--amber);}
+.ab-high{background:#c46b6b20;color:var(--red);} .ab-low{background:var(--surface2);color:var(--muted);}
+.sp-mid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
+.zones-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.zones-bars{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
+.z-row{display:flex;align-items:center;gap:9px;}
+.z-name{font-size:10px;color:var(--muted);width:130px;flex-shrink:0;}
+.z-outer{flex:1;background:var(--surface2);border-radius:3px;height:7px;overflow:hidden;}
+.z-inner{height:100%;border-radius:3px;transition:width .4s;}
+.z-pct{font-size:10px;color:var(--text);width:30px;text-align:right;flex-shrink:0;}
+.hrv-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.hrv-status{display:flex;gap:16px;margin-top:10px;margin-bottom:14px;flex-wrap:wrap;}
+.hrv-stat{display:flex;flex-direction:column;gap:3px;}
+.hrv-stat .hv{font-family:'Fraunces',serif;font-size:22px;font-weight:600;}
+.hrv-stat .hl{font-size:10px;color:var(--muted);}
+.hrv-signal{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:500;}
+.hs-good{background:#6db38820;color:var(--green);} .hs-warn{background:#d4924a20;color:var(--amber);}
+.hs-bad{background:#c46b6b20;color:var(--red);} .hs-neu{background:var(--surface2);color:var(--muted);}
+.vol-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:0;}
+.vol-bars{display:flex;gap:8px;align-items:flex-end;height:100px;margin-top:12px;}
+.vb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+.vb-out{width:100%;background:var(--surface2);border-radius:3px 3px 0 0;height:72px;display:flex;align-items:flex-end;overflow:hidden;}
+.vb-in{width:100%;border-radius:3px 3px 0 0;transition:height .4s;}
+.vb-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;}
+.vb-val{font-size:9px;color:var(--muted);}
+.morning-form{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:22px;}
+.mf-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.mf-row .field input[type="number"]{width:100px;} .mf-row .field input[type="date"]{width:150px;}
+.session-form{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:22px;}
+.sf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;}
+.sf-grid .field input,.sf-grid .field select{width:100%;}
+.zones-inp{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px;}
+.zi-wrap{display:flex;flex-direction:column;gap:3px;}
+.zi-wrap label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.zi-wrap input{background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:6px 8px;outline:none;width:100%;text-align:center;}
+.zi-wrap input:focus{border-color:var(--blue);}
+.sess-list{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:22px;}
+.sess-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface2);}
+.sess-entry{border-top:1px solid var(--border);padding:11px 18px;display:flex;align-items:center;gap:12px;transition:background .1s;}
+.sess-entry:first-child{border-top:none;} .sess-entry:hover{background:var(--surface2);}
+.sess-tag{font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:3px 7px;border-radius:3px;white-space:nowrap;min-width:54px;text-align:center;}
+.st-run{background:#4a8fc420;color:var(--blue);} .st-trail{background:#6db38820;color:var(--green);}
+.st-velo{background:#d4924a20;color:var(--amber);} .st-autre{background:var(--surface2);color:var(--muted);}
+.sess-info{flex:1;}
+.sess-title{color:var(--text);font-size:11px;}
+.sess-meta{color:var(--muted);font-size:10px;margin-top:2px;}
+.sess-zbar{display:flex;gap:3px;align-items:center;}
+.szb{height:12px;border-radius:2px;}
+.import-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:22px;}
+.import-row{display:flex;gap:10px;align-items:center;margin-top:10px;}
+.file-inp{background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 10px;cursor:pointer;flex:1;}
+.loading-dots::after{content:'.';animation:ld 1.2s steps(3,end) infinite;}
+@keyframes ld{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+footer{text-align:center;color:var(--muted);font-size:10px;line-height:2.2;padding:20px 32px 40px;border-top:1px solid var(--border);max-width:900px;margin:0 auto;}
+</style>
+</head>
+<body>
+
+<!-- ── CONFIG OVERLAY ──────────────────────────────────────── -->
+<div id="config-overlay">
+  <div class="config-box">
+    <h2>Dashboard <em>santé</em></h2>
+    <p class="config-subtitle">
+      Première connexion — saisis tes identifiants JSONBin pour activer la synchronisation des données.<br>
+      Ces informations sont stockées uniquement dans ton navigateur, jamais sur GitHub.
+    </p>
+    <div class="config-field">
+      <label>Bin ID</label>
+      <input type="text" id="cfg-bin-id" placeholder="ex : 6642abcdef1234567890abcd" autocomplete="off">
+      <span class="hint">JSONBin Dashboard → ton bin → icône ⚙ → Bin ID</span>
+    </div>
+    <div class="config-field">
+      <label>Master Key (ou Access Key)</label>
+      <input type="password" id="cfg-api-key" placeholder="$2a$10$..." autocomplete="off">
+      <span class="hint">Account Settings → API Keys → Master Key</span>
+    </div>
+    <div class="config-error" id="cfg-error"></div>
+    <div class="config-actions">
+      <button class="btn btn-gold" onclick="cfgSave()">Connexion →</button>
+      <span id="cfg-loading" style="font-size:11px;color:var(--muted);display:none;">Vérification<span class="loading-dots"></span></span>
+    </div>
+    <div class="config-note">
+      🔒 Bin privé requis · La clé ne transite jamais vers GitHub · Données chiffrées HTTPS
+    </div>
+  </div>
+</div>
+
+<!-- ── SYNC BAR ────────────────────────────────────────────── -->
+<div id="sync-bar"></div>
+<div id="sync-status"></div>
+
+<!-- ── TOPBAR ─────────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="brand">Dashboard <em>santé</em></div>
+  <div class="topbar-right">
+    <div class="topbar-meta">Objectif : 98,5 → 91 kg &nbsp;·&nbsp; 2 100 kcal &nbsp;·&nbsp; FCmax 192</div>
+    <button class="btn-settings" onclick="cfgReset()" title="Reconfigurer">⚙</button>
+  </div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('poids',this)">⚖ Poids</button>
+    <button class="tab-btn nt"    onclick="switchTab('nutri',this)">🥗 Nutrition</button>
+    <button class="tab-btn sp"    onclick="switchTab('sport',this)">🏃 Sport</button>
+  </div>
+</div>
+
+<!-- ══════════════════ POIDS ═══════════════════════════════ -->
+<div id="panel-poids" class="panel active">
+  <div class="stats4">
+    <div class="stat-card"><div class="stat-label">Dernier pesage</div><div class="stat-val gold" id="w-last">—</div><div class="stat-sub" id="w-last-d">—</div></div>
+    <div class="stat-card"><div class="stat-label">Moy. 7 jours</div><div class="stat-val" id="w-avg">—</div><div class="stat-sub" id="w-trend"></div></div>
+    <div class="stat-card"><div class="stat-label">Perdu depuis début</div><div class="stat-val" id="w-lost">—</div><div class="stat-sub" id="w-lost-pct">—</div></div>
+    <div class="stat-card"><div class="stat-label">Restant à perdre</div><div class="stat-val" id="w-rem">—</div><div class="stat-sub" id="w-eta">—</div></div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-outer"><div class="prog-inner" id="w-prog" style="width:0%"></div></div>
+    <div class="prog-labels"><span>98,5 kg</span><span id="w-prog-pct">0 %</span><span>91 kg</span></div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-head">
+      <span>Évolution du poids</span>
+      <div class="legend">
+        <div class="li"><div class="ld" style="background:var(--gold);opacity:.45;"></div><span>Brut</span></div>
+        <div class="li"><div class="ll" style="background:var(--gold);"></div><span>Moy. 7j</span></div>
+        <div class="li"><div class="ll" style="background:var(--blue);opacity:.5;"></div><span>Corridor</span></div>
+      </div>
+    </div>
+    <canvas id="w-chart" height="250"></canvas>
+  </div>
+  <div class="entry-sec">
+    <div class="sec-label">Enregistrer un pesage</div>
+    <div class="entry-row">
+      <div class="field"><label>Date</label><input type="date" id="w-inp-date"></div>
+      <div class="field"><label>Poids (kg)</label><input type="number" id="w-inp-w" step="0.1" min="70" max="150" placeholder="97.8"></div>
+      <div class="field"><label>Note</label><input type="text" id="w-inp-note" placeholder="ex : lendemain sortie"></div>
+      <button class="btn btn-gold" onclick="wAdd()">+ Ajouter</button>
+    </div>
+    <div style="min-height:16px;margin-top:8px;" id="w-msg"></div>
+  </div>
+  <div class="hist-sec">
+    <div class="hist-head"><span class="hist-title">Historique</span><button class="btn btn-ghost" style="font-size:10px;padding:3px 9px;" onclick="wClear()">Effacer tout</button></div>
+    <div id="w-table"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ NUTRITION ═══════════════════════════ -->
+<div id="panel-nutri" class="panel">
+  <div class="date-nav">
+    <button class="btn-arrow" onclick="nShift(-1)">‹</button>
+    <span id="nutri-date-lbl">—</span>
+    <button class="btn-arrow" onclick="nShift(+1)">›</button>
+    <input type="date" class="dp" id="n-dp" onchange="nGoTo(this.value)">
+  </div>
+  <div class="gauges4">
+    <div class="gauge-card gc-kcal" id="ng-kcal" style="--fill:0%"><div class="g-lbl">Calories</div><div class="g-val"><span id="nv-kcal">0</span><span class="g-unit">kcal</span></div><div class="g-tgt">/ 2 100 kcal</div><div class="g-pct" id="np-kcal">0 %</div></div>
+    <div class="gauge-card gc-prot" id="ng-prot" style="--fill:0%"><div class="g-lbl">Protéines</div><div class="g-val"><span id="nv-prot">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 175 g</div><div class="g-pct" id="np-prot">0 %</div></div>
+    <div class="gauge-card gc-gluc" id="ng-gluc" style="--fill:0%"><div class="g-lbl">Glucides</div><div class="g-val"><span id="nv-gluc">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 215 g</div><div class="g-pct" id="np-gluc">0 %</div></div>
+    <div class="gauge-card gc-lip"  id="ng-lip"  style="--fill:0%"><div class="g-lbl">Lipides</div><div class="g-val"><span id="nv-lip">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 65 g</div><div class="g-pct" id="np-lip">0 %</div></div>
+  </div>
+  <div class="ai-entry">
+    <div class="ai-title">Ajouter un repas <span class="ai-badge">IA</span></div>
+    <div class="meal-type-row">
+      <button class="meal-btn active" data-meal="Petit-déjeuner" onclick="nSelType(this)">Petit-déj.</button>
+      <button class="meal-btn" data-meal="Déjeuner" onclick="nSelType(this)">Déjeuner</button>
+      <button class="meal-btn" data-meal="Collation" onclick="nSelType(this)">Collation</button>
+      <button class="meal-btn" data-meal="Dîner" onclick="nSelType(this)">Dîner</button>
+      <button class="meal-btn" data-meal="Autre" onclick="nSelType(this)">Autre</button>
+    </div>
+    <div class="ai-inp-row">
+      <textarea class="ai-ta" id="n-ta" placeholder="Décris ton repas… ex : 150g poulet grillé, riz basmati 100g, haricots verts, filet d'huile d'olive"></textarea>
+      <button class="btn btn-green" id="n-btn-ai" onclick="nAnalyze()">Analyser →</button>
+    </div>
+    <div class="st-msg" id="n-st"></div>
+    <div class="ai-result" id="n-result">
+      <div class="ar-title" id="nr-title">—</div>
+      <div class="ar-macros">
+        <div class="ar-mac"><div class="ar-val" id="nr-kcal">—</div><div class="ar-lbl">kcal</div></div>
+        <div class="ar-mac"><div class="ar-val" id="nr-prot">—</div><div class="ar-lbl">prot (g)</div></div>
+        <div class="ar-mac"><div class="ar-val" id="nr-gluc">—</div><div class="ar-lbl">gluc (g)</div></div>
+        <div class="ar-mac"><div class="ar-val" id="nr-lip">—</div><div class="ar-lbl">lip (g)</div></div>
+      </div>
+      <div class="ar-note" id="nr-note"></div>
+      <div class="ar-actions">
+        <button class="btn btn-green" onclick="nConfirm()">✓ Ajouter</button>
+        <button class="btn btn-ghost" onclick="nDiscard()">Annuler</button>
+      </div>
+    </div>
+  </div>
+  <div class="meals-sec">
+    <div class="meals-head"><span class="hist-title">Repas du jour</span></div>
+    <div id="n-meals"></div>
+  </div>
+  <div class="wk-sec">
+    <div class="sec-label">Calories — 7 derniers jours</div>
+    <div class="wk-bars" id="n-wk-bars"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ SPORT ═══════════════════════════════ -->
+<div id="panel-sport" class="panel">
+  <div class="sp-kpis">
+    <div class="sp-kpi"><div class="stat-label">Volume sem.</div><div class="stat-val" id="spv-km">0</div><div class="stat-sub">km cette semaine</div></div>
+    <div class="sp-kpi"><div class="stat-label">Temps sem.</div><div class="stat-val" id="spv-time">0</div><div class="stat-sub">minutes</div></div>
+    <div class="sp-kpi"><div class="stat-label">ACWR</div><div class="stat-val" id="spv-acwr">—</div><div class="stat-sub" id="spv-acwr-badge"></div></div>
+    <div class="sp-kpi"><div class="stat-label">Séances 4 sem.</div><div class="stat-val" id="spv-sess">0</div><div class="stat-sub" id="spv-sess-sub">—</div></div>
+  </div>
+  <div class="sp-mid">
+    <div class="vol-card">
+      <div class="sec-label">Volume hebdo — 8 semaines (km)</div>
+      <div class="vol-bars" id="sp-vol-bars"></div>
+    </div>
+    <div class="zones-card">
+      <div class="sec-label">Zones FC — semaine en cours</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">FCmax 192 · FCrepos 52 · Karvonen</div>
+      <div class="zones-bars">
+        <div class="z-row"><span class="z-name" style="color:var(--z1);">Z1 Récup (&lt;134)</span><div class="z-outer"><div class="z-inner" id="z1-bar" style="background:var(--z1);width:0%"></div></div><span class="z-pct" id="z1-pct">0%</span></div>
+        <div class="z-row"><span class="z-name" style="color:var(--z2);">Z2 Fond. (134–152)</span><div class="z-outer"><div class="z-inner" id="z2-bar" style="background:var(--z2);width:0%"></div></div><span class="z-pct" id="z2-pct">0%</span></div>
+        <div class="z-row"><span class="z-name" style="color:var(--z3);">Z3 Tempo (152–161)</span><div class="z-outer"><div class="z-inner" id="z3-bar" style="background:var(--z3);width:0%"></div></div><span class="z-pct" id="z3-pct">0%</span></div>
+        <div class="z-row"><span class="z-name" style="color:var(--z4);">Z4 Seuil (161–171)</span><div class="z-outer"><div class="z-inner" id="z4-bar" style="background:var(--z4);width:0%"></div></div><span class="z-pct" id="z4-pct">0%</span></div>
+        <div class="z-row"><span class="z-name" style="color:var(--z5);">Z5 VMA (&gt;171)</span><div class="z-outer"><div class="z-inner" id="z5-bar" style="background:var(--z5);width:0%"></div></div><span class="z-pct" id="z5-pct">0%</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:22px;"></div>
+  <div class="hrv-card" style="margin-bottom:22px;">
+    <div class="sec-label">FC repos & HRV — suivi matinal</div>
+    <div class="hrv-status">
+      <div class="hrv-stat"><div class="hv" id="hrv-fc">—</div><div class="hl">FC repos auj.</div></div>
+      <div class="hrv-stat"><div class="hv" id="hrv-hrv">—</div><div class="hl">HRV auj.</div></div>
+      <div class="hrv-stat"><div class="hv" id="hrv-fc-avg" style="font-size:16px;">—</div><div class="hl">FC moy. 7j</div></div>
+      <div class="hrv-stat"><div class="hv" id="hrv-hrv-avg" style="font-size:16px;">—</div><div class="hl">HRV moy. 7j</div></div>
+      <div style="flex:1;display:flex;align-items:center;"><div class="hrv-signal hs-neu" id="hrv-signal">— Pas de données</div></div>
+    </div>
+    <canvas id="hrv-chart" height="100"></canvas>
+  </div>
+  <div class="morning-form">
+    <div class="sec-label">Saisie matinale</div>
+    <div class="mf-row">
+      <div class="field"><label>Date</label><input type="date" id="hrv-inp-date"></div>
+      <div class="field"><label>FC repos (bpm)</label><input type="number" id="hrv-inp-fc" min="30" max="120" placeholder="52"></div>
+      <div class="field"><label>HRV (ms)</label><input type="number" id="hrv-inp-hrv" min="10" max="200" placeholder="65"></div>
+      <div class="field"><label>Qualité sommeil</label>
+        <select id="hrv-inp-sleep">
+          <option value="">—</option>
+          <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+          <option value="4">⭐⭐⭐⭐ Bon</option>
+          <option value="3">⭐⭐⭐ Moyen</option>
+          <option value="2">⭐⭐ Mauvais</option>
+          <option value="1">⭐ Très mauvais</option>
+        </select>
+      </div>
+      <button class="btn btn-blue" onclick="hrvAdd()">+ Sauvegarder</button>
+    </div>
+    <div style="min-height:15px;margin-top:7px;" id="hrv-msg"></div>
+  </div>
+  <div class="import-card">
+    <div class="sec-label">Import COROS (.csv)</div>
+    <div style="color:var(--muted);font-size:11px;line-height:1.8;">Export depuis l'app COROS → Activités → séance → Exporter CSV.</div>
+    <div class="import-row">
+      <input type="file" class="file-inp" id="coros-file" accept=".csv" onchange="corosImport(this)">
+      <div style="font-size:11px;color:var(--muted);" id="import-msg"></div>
+    </div>
+  </div>
+  <div class="session-form">
+    <div class="sec-label">Saisie manuelle de séance</div>
+    <div class="sf-grid">
+      <div class="field"><label>Date</label><input type="date" id="sp-inp-date"></div>
+      <div class="field"><label>Type</label>
+        <select id="sp-inp-type"><option value="run">Course</option><option value="trail">Trail</option><option value="velo">Vélo</option><option value="autre">Autre</option></select>
+      </div>
+      <div class="field"><label>Distance (km)</label><input type="number" id="sp-inp-km" step="0.1" min="0" placeholder="12.5"></div>
+      <div class="field"><label>Durée (min)</label><input type="number" id="sp-inp-dur" min="0" placeholder="65"></div>
+      <div class="field"><label>FC moy (bpm)</label><input type="number" id="sp-inp-fcm" min="0" placeholder="148"></div>
+      <div class="field"><label>FC max (bpm)</label><input type="number" id="sp-inp-fcx" min="0" placeholder="172"></div>
+      <div class="field"><label>RPE (1–10)</label><input type="number" id="sp-inp-rpe" min="1" max="10" placeholder="6"></div>
+      <div class="field"><label>Note</label><input type="text" id="sp-inp-note" placeholder="sortie longue Z2"></div>
+    </div>
+    <div class="sec-label" style="margin-bottom:8px;">Zones FC % (optionnel)</div>
+    <div class="zones-inp">
+      <div class="zi-wrap"><label style="color:var(--z1);">Z1 %</label><input type="number" id="zi1" min="0" max="100" placeholder="0"></div>
+      <div class="zi-wrap"><label style="color:var(--z2);">Z2 %</label><input type="number" id="zi2" min="0" max="100" placeholder="0"></div>
+      <div class="zi-wrap"><label style="color:var(--z3);">Z3 %</label><input type="number" id="zi3" min="0" max="100" placeholder="0"></div>
+      <div class="zi-wrap"><label style="color:var(--z4);">Z4 %</label><input type="number" id="zi4" min="0" max="100" placeholder="0"></div>
+      <div class="zi-wrap"><label style="color:var(--z5);">Z5 %</label><input type="number" id="zi5" min="0" max="100" placeholder="0"></div>
+    </div>
+    <button class="btn btn-blue" onclick="spAddSession()">+ Ajouter la séance</button>
+    <div style="min-height:15px;margin-top:8px;" id="sp-msg"></div>
+  </div>
+  <div class="sess-list">
+    <div class="sess-head"><span class="hist-title">Séances récentes</span><button class="btn btn-ghost" style="font-size:10px;padding:3px 9px;" onclick="spClear()">Effacer tout</button></div>
+    <div id="sp-sess-list"></div>
+  </div>
+</div>
+
+<footer>Données synchronisées sur JSONBin · Zones FC Karvonen (FCmax 192, FCrepos 52) · ACWR = charge 7j / moy. 28j</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════ */
+/*  JSONBIN API                                                */
+/* ═══════════════════════════════════════════════════════════ */
+const CFG_KEY = 'healthdash_config_v1';
+let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || 'null');
+
+// In-memory cache of the full bin
+let BIN_DATA = { weights: [], nutrition: {}, sport: [], hrv: [] };
+let syncTimeout = null;
+
+function binUrl()  { return `https://api.jsonbin.io/v3/b/${CFG.binId}`; }
+function binHeaders(write=false){
+  const h = { 'X-Master-Key': CFG.apiKey, 'Content-Type': 'application/json' };
+  if(!write) h['X-Bin-Meta'] = 'false';
+  return h;
+}
+
+function syncIndicator(state, msg=''){
+  const bar = document.getElementById('sync-bar');
+  const st  = document.getElementById('sync-status');
+  bar.className = state;
+  st.textContent = msg;
+  if(state === 'done' || state === 'error'){
+    setTimeout(()=>{ bar.className=''; bar.style.transform=''; st.textContent=''; }, 2500);
+  }
+}
+
+async function binLoad(){
+  try {
+    syncIndicator('syncing','Chargement…');
+    const r = await fetch(binUrl(), { headers: binHeaders() });
+    if(!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    BIN_DATA = { weights:[], nutrition:{}, sport:[], hrv:[], ...j.record };
+    syncIndicator('done','✓ Synchronisé');
+    return true;
+  } catch(e) {
+    syncIndicator('error','✗ Erreur de connexion');
+    return false;
+  }
+}
+
+async function binSave(){
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async ()=>{
+    try {
+      syncIndicator('syncing','Sauvegarde…');
+      const r = await fetch(binUrl(), {
+        method: 'PUT',
+        headers: binHeaders(true),
+        body: JSON.stringify(BIN_DATA)
+      });
+      if(!r.ok) throw new Error(r.status);
+      syncIndicator('done','✓ Sauvegardé');
+    } catch(e) {
+      syncIndicator('error','✗ Erreur de sauvegarde');
+    }
+  }, 800); // debounce 800ms — regroupe les sauvegardes rapprochées
+}
+
+/* ── CONFIG ─────────────────────────────────────────────────── */
+async function cfgSave(){
+  const binId  = document.getElementById('cfg-bin-id').value.trim();
+  const apiKey = document.getElementById('cfg-api-key').value.trim();
+  const errEl  = document.getElementById('cfg-error');
+  const loadEl = document.getElementById('cfg-loading');
+  if(!binId || !apiKey){ errEl.textContent = 'Les deux champs sont requis.'; return; }
+  errEl.textContent = '';
+  loadEl.style.display = 'inline';
+  document.querySelector('.config-actions .btn').disabled = true;
+  CFG = { binId, apiKey };
+  const ok = await binLoad();
+  loadEl.style.display = 'none';
+  document.querySelector('.config-actions .btn').disabled = false;
+  if(ok){
+    localStorage.setItem(CFG_KEY, JSON.stringify(CFG));
+    document.getElementById('config-overlay').style.display = 'none';
+    initApp();
+  } else {
+    CFG = null;
+    errEl.textContent = 'Connexion échouée — vérifie le Bin ID et la clé API.';
+  }
+}
+
+function cfgReset(){
+  if(!confirm('Reconfigurer la connexion JSONBin ?')) return;
+  localStorage.removeItem(CFG_KEY);
+  location.reload();
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  INIT                                                       */
+/* ═══════════════════════════════════════════════════════════ */
+async function initApp(){
+  document.getElementById('w-inp-date').value  = todayStr();
+  document.getElementById('sp-inp-date').value = todayStr();
+  document.getElementById('hrv-inp-date').value= todayStr();
+
+  // Inject historical weight data if bin is empty
+  if(BIN_DATA.weights.length === 0){
+    BIN_DATA.weights = [
+      {date:'2026-01-07',weight:101.5,note:''},{date:'2026-01-12',weight:99.5,note:''},
+      {date:'2026-01-14',weight:99.0,note:''},{date:'2026-01-16',weight:98.5,note:'départ suivi'},
+      {date:'2026-01-22',weight:99.0,note:''},{date:'2026-01-25',weight:98.5,note:''},
+      {date:'2026-01-28',weight:98.5,note:''},{date:'2026-02-01',weight:98.8,note:''},
+      {date:'2026-02-04',weight:98.5,note:''},{date:'2026-02-08',weight:97.8,note:''},
+      {date:'2026-02-11',weight:98.2,note:''},{date:'2026-02-14',weight:97.5,note:''},
+      {date:'2026-02-18',weight:97.2,note:''},{date:'2026-02-22',weight:97.0,note:''},
+      {date:'2026-02-25',weight:97.2,note:''},{date:'2026-03-01',weight:97.0,note:''},
+      {date:'2026-03-05',weight:97.3,note:''},{date:'2026-03-08',weight:97.0,note:''},
+      {date:'2026-03-14',weight:96.8,note:''},{date:'2026-03-18',weight:97.5,note:''},
+      {date:'2026-03-22',weight:97.3,note:''},{date:'2026-03-25',weight:97.0,note:''},
+      {date:'2026-03-28',weight:97.2,note:''},{date:'2026-04-01',weight:97.5,note:''},
+      {date:'2026-04-02',weight:98.0,note:'35 ans 🎂'},{date:'2026-04-05',weight:98.0,note:''},
+      {date:'2026-04-10',weight:97.8,note:''},{date:'2026-04-15',weight:97.5,note:''},
+      {date:'2026-04-19',weight:97.3,note:''},{date:'2026-04-22',weight:98.5,note:''},
+    ];
+    await binSave();
+  }
+
+  wRender(); nRender(); spRender();
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  UTILS                                                      */
+/* ═══════════════════════════════════════════════════════════ */
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(s){ const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
+function fmtKg(v)  { return v.toFixed(1).replace('.',',')+' kg'; }
+function movAvg(arr,n=7){
+  return arr.map((_,i)=>{ const sl=arr.slice(Math.max(0,i-n+1),i+1); return sl.reduce((s,v)=>s+v,0)/sl.length; });
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='poids') wRender();
+  if(name==='nutri') nRender();
+  if(name==='sport') spRender();
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  POIDS                                                      */
+/* ═══════════════════════════════════════════════════════════ */
+const W_START=98.5, W_TGT=91, W_RMIN=0.25, W_RMAX=0.5;
+function wSorted(){ return[...BIN_DATA.weights].sort((a,b)=>a.date.localeCompare(b.date)); }
+
+function wAdd(){
+  const d=document.getElementById('w-inp-date').value;
+  const w=parseFloat(document.getElementById('w-inp-w').value);
+  const note=document.getElementById('w-inp-note').value.trim();
+  if(!d){wMsg2('Date manquante.','err');return;}
+  if(isNaN(w)||w<70||w>150){wMsg2('Poids invalide.','err');return;}
+  const ei=BIN_DATA.weights.findIndex(x=>x.date===d);
+  if(ei>=0){BIN_DATA.weights[ei]={date:d,weight:w,note};wMsg2('Mise à jour.','ok');}
+  else{BIN_DATA.weights.push({date:d,weight:w,note});wMsg2('Enregistré.','ok');}
+  binSave();
+  document.getElementById('w-inp-w').value='';
+  document.getElementById('w-inp-note').value='';
+  wRender();
+}
+function wClear(){ if(!confirm('Effacer tout ?'))return; BIN_DATA.weights=[]; binSave(); wRender(); }
+function wDel(date){ BIN_DATA.weights=BIN_DATA.weights.filter(d=>d.date!==date); binSave(); wRender(); }
+function wMsg2(t,c){ const el=document.getElementById('w-msg'); el.textContent=t; el.className=c==='ok'?'msg-ok':'msg-err'; setTimeout(()=>{el.textContent='';el.className='';},3000); }
+
+function wRender(){ const s=wSorted(); wStats(s); wChart(s); wTable(s); }
+
+function wStats(s){
+  const ws=s.map(d=>d.weight), avgs=movAvg(ws);
+  const last=s[s.length-1], avg7=avgs[avgs.length-1]||W_START;
+  document.getElementById('w-last').textContent=last?fmtKg(last.weight):'—';
+  document.getElementById('w-last-d').textContent=last?fmtDate(last.date):'—';
+  document.getElementById('w-avg').textContent=s.length>0?fmtKg(avg7):'—';
+  const tEl=document.getElementById('w-trend');
+  if(s.length>=7){
+    const wd=avgs[avgs.length-1]-avgs[Math.max(0,avgs.length-8)];
+    const b=document.createElement('span');
+    if(wd<=-W_RMIN&&wd>=-W_RMAX){b.className='trend-badge tb-good';b.textContent='✓ En bonne voie';}
+    else if(wd>-W_RMIN&&wd<0){b.className='trend-badge tb-warn';b.textContent='~ Perte lente';}
+    else if(wd>=0){b.className='trend-badge tb-bad';b.textContent='↑ Stagnation';}
+    else{b.className='trend-badge tb-warn';b.textContent='⚡ Trop rapide';}
+    tEl.innerHTML=''; tEl.appendChild(b);
+  } else { tEl.textContent=s.length>0?`${s.length} pesée${s.length>1?'s':''}`:''; }
+  const lost=W_START-avg7;
+  document.getElementById('w-lost').textContent=s.length>0?(lost>=0?'-':'+')+Math.abs(lost).toFixed(1).replace('.',',')+' kg':'—';
+  document.getElementById('w-lost-pct').textContent=s.length>0?(lost/W_START*100).toFixed(1).replace('.',',')+' % initial':'—';
+  const rem=avg7-W_TGT;
+  document.getElementById('w-rem').textContent=s.length>0?Math.max(0,rem).toFixed(1).replace('.',',')+' kg':(W_START-W_TGT).toFixed(1).replace('.',',')+' kg';
+  if(s.length>=14&&lost>0){ const rw=lost/(s.length/7); document.getElementById('w-eta').textContent=rw>0?`~${Math.ceil(rem/rw)} sem.`:'—';}
+  else document.getElementById('w-eta').textContent=s.length>0?'ETA après 2 sem.':'Objectif : −7,5 kg';
+  const pct=s.length>0?Math.min(100,Math.max(0,lost/(W_START-W_TGT)*100)):0;
+  document.getElementById('w-prog').style.width=pct.toFixed(1)+'%';
+  document.getElementById('w-prog-pct').textContent=pct.toFixed(0)+' %';
+}
+
+function wChart(s){
+  const canvas=document.getElementById('w-chart');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-36, H=250;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  if(s.length===0){ ctx.fillStyle='#7a7870'; ctx.font='11px DM Mono,monospace'; ctx.textAlign='center'; ctx.fillText('Enregistre tes premières pesées.',W/2,H/2); return; }
+  const ws=s.map(d=>d.weight), avgs=movAvg(ws), n=ws.length;
+  const all=[...ws,...avgs,W_TGT,W_START];
+  const minY=Math.min(...all)-1, maxY=Math.max(...all)+1;
+  const pad={t:14,r:42,b:28,l:42};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const xP=i=>pad.l+(n<=1?cW/2:(i/(n-1))*cW);
+  const yP=v=>pad.t+cH-((v-minY)/(maxY-minY))*cH;
+  const step=(maxY-minY)>6?2:1;
+  for(let v=Math.ceil(minY);v<=maxY;v+=step){
+    const y=yP(v); ctx.strokeStyle='#2a2a28'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cW,y); ctx.stroke();
+    ctx.fillStyle='#7a7870'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(v.toFixed(0),pad.l-5,y+3.5);
+  }
+  const ty=yP(W_TGT);
+  ctx.strokeStyle='#4a8fc460'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l,ty); ctx.lineTo(pad.l+cW,ty); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#4a8fc4'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='left';
+  ctx.fillText('91',pad.l+cW+4,ty+3.5);
+  if(n>=1){
+    const sd=new Date(s[0].date);
+    const days=s.map(d=>(new Date(d.date)-sd)/86400000);
+    const mx=Math.max(...days,30);
+    const pts=[];
+    for(let di=0;di<=mx;di++) pts.push({xi:pad.l+(di/mx)*cW,wMin:Math.max(W_TGT,W_START-(di/7)*W_RMAX),wMax:W_START-(di/7)*W_RMIN});
+    ctx.beginPath();
+    pts.forEach((p,i)=>{ if(i===0)ctx.moveTo(p.xi,yP(p.wMax)); else ctx.lineTo(p.xi,yP(p.wMax)); });
+    [...pts].reverse().forEach(p=>ctx.lineTo(p.xi,yP(p.wMin)));
+    ctx.closePath(); ctx.fillStyle='#4a8fc410'; ctx.fill();
+  }
+  ctx.fillStyle='#c8b56050';
+  ws.forEach((w,i)=>{ ctx.beginPath(); ctx.arc(xP(i),yP(w),3,0,Math.PI*2); ctx.fill(); });
+  if(avgs.length>=2){
+    ctx.beginPath(); ctx.strokeStyle='#c8b560'; ctx.lineWidth=2; ctx.lineJoin='round';
+    avgs.forEach((a,i)=>{ if(i===0)ctx.moveTo(xP(i),yP(a)); else ctx.lineTo(xP(i),yP(a)); });
+    ctx.stroke();
+  }
+  if(avgs.length>=1){ const li=avgs.length-1; ctx.beginPath(); ctx.fillStyle='#c8b560'; ctx.arc(xP(li),yP(avgs[li]),5,0,Math.PI*2); ctx.fill(); }
+  const lc=Math.min(n,6), s2=Math.max(1,Math.floor(n/lc));
+  ctx.fillStyle='#7a7870'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='center';
+  for(let i=0;i<n;i+=s2) ctx.fillText(fmtDate(s[i].date).slice(0,5),xP(i),H-6);
+}
+
+function wTable(s){
+  const wrap=document.getElementById('w-table');
+  if(s.length===0){ wrap.innerHTML='<div class="empty-state">Aucune donnée.</div>'; return; }
+  const avgs=movAvg(s.map(d=>d.weight));
+  const rows=[...s].reverse().map((e,ri)=>{
+    const i=s.length-1-ri, prev=i>0?s[i-1].weight:null, delta=prev!==null?e.weight-prev:null;
+    let dh='<td class="td-m">—</td>';
+    if(delta!==null){ const cl=delta<0?'td-neg':delta>0?'td-pos':'td-m'; dh=`<td class="${cl}">${delta>0?'+':''}${delta.toFixed(1).replace('.',',')} kg</td>`; }
+    return`<tr><td>${fmtDate(e.date)}</td><td><strong>${e.weight.toFixed(1).replace('.',',')} kg</strong></td>${dh}<td class="td-m">${avgs[i].toFixed(2).replace('.',',')} kg</td><td class="td-m">${e.note||'—'}</td><td><span style="cursor:pointer;color:#7a7870;font-size:11px" onclick="wDel('${e.date}')">✕</span></td></tr>`;
+  }).join('');
+  wrap.innerHTML=`<table><thead><tr><th>Date</th><th>Poids</th><th>Δ J−1</th><th>Moy. 7j</th><th>Note</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  NUTRITION                                                  */
+/* ═══════════════════════════════════════════════════════════ */
+const N_TGT={kcal:2100,prot:175,gluc:215,lip:65};
+let nDate=todayStr(), nMealType='Petit-déjeuner', nPending=null;
+function nShift(n){ const d=new Date(nDate); d.setDate(d.getDate()+n); nDate=d.toISOString().slice(0,10); nRender(); }
+function nGoTo(v){ if(v){nDate=v;nRender();} }
+function nSelType(btn){ document.querySelectorAll('.meal-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); nMealType=btn.dataset.meal; }
+function nSt(msg,err=false){ const el=document.getElementById('n-st'); el.textContent=msg; el.className='st-msg'+(err?' err':''); }
+function nTagCls(t){ return{'Petit-déjeuner':'t-pj','Déjeuner':'t-dej','Collation':'t-col','Dîner':'t-din','Autre':'t-aut'}[t]||'t-aut'; }
+
+async function nAnalyze(){
+  const input=document.getElementById('n-ta').value.trim();
+  if(!input){nSt('Décris d\'abord le repas.',true);return;}
+  const btn=document.getElementById('n-btn-ai');
+  btn.disabled=true; btn.textContent='Analyse'; btn.classList.add('loading-dots');
+  nSt('Analyse en cours…');
+  document.getElementById('n-result').classList.remove('vis');
+  const prompt=`Tu es un nutritionniste expert. Analyse ce repas.\nRepas : "${input}"\nRéponds UNIQUEMENT en JSON valide sans backticks :\n{"titre":"Nom court (max 60 chars)","kcal":000,"prot":00,"gluc":00,"lip":00,"note":"Commentaire court (1-2 phrases)"}\nValeurs entières, portions standard françaises si non précisé.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const p=JSON.parse((data.content?.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim());
+    nPending={id:Date.now(),type:nMealType,desc:input,titre:p.titre,kcal:parseInt(p.kcal)||0,prot:parseInt(p.prot)||0,gluc:parseInt(p.gluc)||0,lip:parseInt(p.lip)||0,note:p.note||''};
+    document.getElementById('nr-title').textContent=p.titre;
+    document.getElementById('nr-kcal').textContent=p.kcal;
+    document.getElementById('nr-prot').textContent=p.prot+' g';
+    document.getElementById('nr-gluc').textContent=p.gluc+' g';
+    document.getElementById('nr-lip').textContent=p.lip+' g';
+    document.getElementById('nr-note').textContent=p.note;
+    document.getElementById('n-result').classList.add('vis');
+    nSt('');
+  }catch(e){ nSt('Erreur d\'analyse.',true); nPending=null; }
+  btn.disabled=false; btn.textContent='Analyser →'; btn.classList.remove('loading-dots');
+}
+function nConfirm(){ if(!nPending)return; if(!BIN_DATA.nutrition[nDate])BIN_DATA.nutrition[nDate]=[]; BIN_DATA.nutrition[nDate].push(nPending); binSave(); nPending=null; document.getElementById('n-ta').value=''; document.getElementById('n-result').classList.remove('vis'); nSt(''); nRender(); }
+function nDiscard(){ nPending=null; document.getElementById('n-result').classList.remove('vis'); nSt(''); }
+function nDelMeal(id){ if(!BIN_DATA.nutrition[nDate])return; BIN_DATA.nutrition[nDate]=BIN_DATA.nutrition[nDate].filter(m=>m.id!==id); if(!BIN_DATA.nutrition[nDate].length)delete BIN_DATA.nutrition[nDate]; binSave(); nRender(); }
+
+function nRender(){
+  const d=new Date(nDate+'T12:00:00');
+  document.getElementById('nutri-date-lbl').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('n-dp').value=nDate;
+  const meals=BIN_DATA.nutrition[nDate]||[];
+  const tot=meals.reduce((a,m)=>({kcal:a.kcal+m.kcal,prot:a.prot+m.prot,gluc:a.gluc+m.gluc,lip:a.lip+m.lip}),{kcal:0,prot:0,gluc:0,lip:0});
+  ['kcal','prot','gluc','lip'].forEach(k=>{
+    const v=tot[k],tgt=N_TGT[k],pct=Math.min(110,(v/tgt)*100);
+    document.getElementById('ng-'+k).style.setProperty('--fill',pct.toFixed(1)+'%');
+    document.getElementById('nv-'+k).textContent=v;
+    const pEl=document.getElementById('np-'+k);
+    pEl.textContent=((v/tgt)*100).toFixed(0)+' %';
+    pEl.className='g-pct '+(pct>=95&&pct<=110?'pct-ok':pct>110?'pct-over':'pct-warn');
+  });
+  const lEl=document.getElementById('n-meals');
+  if(!meals.length){ lEl.innerHTML='<div class="empty-state">Aucun repas enregistré.</div>'; }
+  else lEl.innerHTML=meals.map(m=>`<div class="meal-entry"><span class="mtt ${nTagCls(m.type)}">${m.type}</span><span class="meal-desc">${m.titre||m.desc}</span><div class="meal-macros"><span><span class="mmv">${m.kcal}</span> kcal</span><span>P <span class="mmv">${m.prot}g</span></span><span>G <span class="mmv">${m.gluc}g</span></span><span>L <span class="mmv">${m.lip}g</span></span></div><button class="meal-del" onclick="nDelMeal(${m.id})">✕</button></div>`).join('');
+  const days=[]; for(let i=6;i>=0;i--){ const dd=new Date(nDate+'T12:00:00'); dd.setDate(dd.getDate()-i); days.push(dd.toISOString().slice(0,10)); }
+  const vals=days.map(d=>(BIN_DATA.nutrition[d]||[]).reduce((s,m)=>s+m.kcal,0));
+  const mx=Math.max(...vals,N_TGT.kcal);
+  document.getElementById('n-wk-bars').innerHTML=days.map((d,i)=>{
+    const v=vals[i],h=v>0?Math.max(4,(v/mx)*54):0,isT=d===nDate,over=v>N_TGT.kcal;
+    const col=over?'var(--kcal)':isT?'var(--green)':'var(--border)';
+    const lbl=new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short'}).slice(0,3);
+    return`<div class="wb-wrap"><div class="wb-val">${v>0?v:''}</div><div class="wb-out"><div class="wb-in" style="height:${h}px;background:${col};"></div></div><div class="wb-lbl" style="${isT?'color:var(--text);font-weight:500;':''}">${lbl}</div></div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  SPORT                                                      */
+/* ═══════════════════════════════════════════════════════════ */
+function spSorted(){ return[...BIN_DATA.sport].sort((a,b)=>a.date.localeCompare(b.date)); }
+function hrvSorted(){ return[...BIN_DATA.hrv].sort((a,b)=>a.date.localeCompare(b.date)); }
+
+function spMsg(t,c){ const el=document.getElementById('sp-msg'); el.textContent=t; el.className=c==='ok'?'msg-ok':'msg-err'; setTimeout(()=>{el.textContent='';el.className='';},3000); }
+function hrvMsg(t,c){ const el=document.getElementById('hrv-msg'); el.textContent=t; el.className=c==='ok'?'msg-ok':'msg-err'; setTimeout(()=>{el.textContent='';el.className='';},3000); }
+
+function spAddSession(){
+  const date=document.getElementById('sp-inp-date').value;
+  const type=document.getElementById('sp-inp-type').value;
+  const km=parseFloat(document.getElementById('sp-inp-km').value)||0;
+  const dur=parseInt(document.getElementById('sp-inp-dur').value)||0;
+  const fcm=parseInt(document.getElementById('sp-inp-fcm').value)||0;
+  const fcx=parseInt(document.getElementById('sp-inp-fcx').value)||0;
+  const rpe=parseInt(document.getElementById('sp-inp-rpe').value)||5;
+  const note=document.getElementById('sp-inp-note').value.trim();
+  const z=[1,2,3,4,5].map(i=>parseInt(document.getElementById('zi'+i).value)||0);
+  if(!date){spMsg('Date manquante.','err');return;}
+  if(!km&&!dur){spMsg('Distance ou durée requise.','err');return;}
+  BIN_DATA.sport.push({id:Date.now(),date,type,km,dur,fcm,fcx,rpe,note,z1:z[0],z2:z[1],z3:z[2],z4:z[3],z5:z[4]});
+  binSave();
+  ['sp-inp-km','sp-inp-dur','sp-inp-fcm','sp-inp-fcx','sp-inp-rpe','sp-inp-note','zi1','zi2','zi3','zi4','zi5'].forEach(id=>document.getElementById(id).value='');
+  spMsg('Séance enregistrée.','ok'); spRender();
+}
+function spClear(){ if(!confirm('Effacer toutes les séances ?'))return; BIN_DATA.sport=[]; binSave(); spRender(); }
+function spDel(id){ BIN_DATA.sport=BIN_DATA.sport.filter(s=>s.id!==id); binSave(); spRender(); }
+
+function hrvAdd(){
+  const date=document.getElementById('hrv-inp-date').value;
+  const fc=parseInt(document.getElementById('hrv-inp-fc').value)||0;
+  const hrv=parseInt(document.getElementById('hrv-inp-hrv').value)||0;
+  const sleep=parseInt(document.getElementById('hrv-inp-sleep').value)||0;
+  if(!date){hrvMsg('Date manquante.','err');return;}
+  if(!fc&&!hrv){hrvMsg('FC ou HRV requis.','err');return;}
+  const ei=BIN_DATA.hrv.findIndex(x=>x.date===date);
+  if(ei>=0) BIN_DATA.hrv[ei]={date,fc,hrv,sleep};
+  else BIN_DATA.hrv.push({date,fc,hrv,sleep});
+  binSave(); hrvMsg('Sauvegardé.','ok'); spRender();
+}
+
+function corosImport(input){
+  const file=input.files[0]; if(!file)return;
+  const msgEl=document.getElementById('import-msg');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const lines=e.target.result.split('\n').filter(l=>l.trim());
+      const header=lines[0].toLowerCase();
+      let parsed=null;
+      if(header.includes('distance')||header.includes('duration')||header.includes('heart rate')){
+        for(let i=1;i<lines.length;i++){
+          const cols=lines[i].split(',');
+          if(cols.length<4) continue;
+          const dateRaw=cols[0]?.trim();
+          const distRaw=parseFloat(cols[1])||0;
+          const durRaw=parseInt(cols[2])||0;
+          const fcmRaw=parseInt(cols[3])||0;
+          const fcxRaw=parseInt(cols[4])||0;
+          if(dateRaw&&(distRaw||durRaw)){
+            let dateStr=todayStr();
+            const dm=dateRaw.match(/(\d{4}[-/]\d{2}[-/]\d{2})/);
+            if(dm) dateStr=dm[1].replace(/\//g,'-');
+            parsed={date:dateStr,km:distRaw,dur:Math.round(durRaw/60),fcm:fcmRaw,fcx:fcxRaw};
+            break;
+          }
+        }
+      }
+      if(parsed){
+        let z={z1:0,z2:0,z3:0,z4:0,z5:0};
+        if(parsed.fcm>0){
+          if(parsed.fcm<134)      z={z1:80,z2:15,z3:5,z4:0,z5:0};
+          else if(parsed.fcm<152) z={z1:20,z2:65,z3:10,z4:5,z5:0};
+          else if(parsed.fcm<161) z={z1:5,z2:30,z3:50,z4:12,z5:3};
+          else if(parsed.fcm<171) z={z1:5,z2:15,z3:25,z4:45,z5:10};
+          else                    z={z1:5,z2:10,z3:15,z4:25,z5:45};
+        }
+        BIN_DATA.sport.push({id:Date.now(),date:parsed.date,type:'run',km:parsed.km,dur:parsed.dur,fcm:parsed.fcm,fcx:parsed.fcx,rpe:0,note:'Import COROS',...z});
+        binSave(); spRender();
+        msgEl.style.color='var(--green)'; msgEl.textContent=`✓ ${parsed.km} km · ${parsed.dur} min`;
+      } else { msgEl.style.color='var(--red)'; msgEl.textContent='Format non reconnu.'; }
+    }catch(err){ msgEl.style.color='var(--red)'; msgEl.textContent='Erreur de lecture.'; }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function spRender(){
+  const all=spSorted();
+  const today=new Date(todayStr()+'T12:00:00');
+  const dow=(today.getDay()+6)%7;
+  const wkStart=new Date(today); wkStart.setDate(today.getDate()-dow);
+  const wkStr=wkStart.toISOString().slice(0,10);
+  const wkSess=all.filter(s=>s.date>=wkStr);
+  const wkKm=wkSess.reduce((s,x)=>s+x.km,0);
+  const wkMin=wkSess.reduce((s,x)=>s+x.dur,0);
+  const d7=new Date(today); d7.setDate(d7.getDate()-6);
+  const d28=new Date(today); d28.setDate(d28.getDate()-27);
+  const str7=d7.toISOString().slice(0,10), str28=d28.toISOString().slice(0,10);
+  const load7=all.filter(s=>s.date>=str7).reduce((s,x)=>s+x.km,0);
+  const load28=all.filter(s=>s.date>=str28).reduce((s,x)=>s+x.km,0)/4;
+  const acwr=load28>0?(load7/load28):null;
+  document.getElementById('spv-km').textContent=wkKm.toFixed(1);
+  document.getElementById('spv-time').textContent=wkMin;
+  document.getElementById('spv-acwr').textContent=acwr?acwr.toFixed(2):'—';
+  const aEl=document.getElementById('spv-acwr-badge');
+  if(acwr){
+    let cls,txt;
+    if(acwr<0.8){cls='ab-low';txt='Charge faible';}
+    else if(acwr<=1.3){cls='ab-ok';txt='✓ Zone optimale';}
+    else if(acwr<=1.5){cls='ab-warn';txt='⚠ Charge élevée';}
+    else{cls='ab-high';txt='⚡ Surcharge';}
+    aEl.innerHTML=`<span class="acwr-badge ${cls}">${txt}</span>`;
+  } else aEl.textContent='Données insuffisantes';
+  const last4wSess=all.filter(s=>s.date>=str28);
+  document.getElementById('spv-sess').textContent=last4wSess.length;
+  document.getElementById('spv-sess-sub').textContent=`${(last4wSess.length/4).toFixed(1)} / sem.`;
+  // Volume 8 semaines
+  const weeks8=[];
+  for(let w=7;w>=0;w--){
+    const ws=new Date(wkStart); ws.setDate(ws.getDate()-w*7);
+    const we=new Date(ws); we.setDate(ws.getDate()+6);
+    const wsStr=ws.toISOString().slice(0,10), weStr=we.toISOString().slice(0,10);
+    const km=all.filter(s=>s.date>=wsStr&&s.date<=weStr).reduce((s,x)=>s+x.km,0);
+    const lbl=ws.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}).replace(' ','/');
+    weeks8.push({km,lbl,isCurrent:w===0});
+  }
+  const maxVol=Math.max(...weeks8.map(w=>w.km),1);
+  document.getElementById('sp-vol-bars').innerHTML=weeks8.map(w=>{
+    const h=w.km>0?Math.max(4,(w.km/maxVol)*72):0;
+    const col=w.isCurrent?'var(--blue)':'var(--border)';
+    return`<div class="vb-wrap"><div class="vb-val">${w.km>0?w.km.toFixed(0):''}</div><div class="vb-out"><div class="vb-in" style="height:${h}px;background:${col};"></div></div><div class="vb-lbl" style="${w.isCurrent?'color:var(--text);font-weight:500;':''}">${w.lbl}</div></div>`;
+  }).join('');
+  // Zones semaine
+  const totZ={z1:0,z2:0,z3:0,z4:0,z5:0};
+  wkSess.forEach(s=>{ totZ.z1+=s.z1*s.dur/100; totZ.z2+=s.z2*s.dur/100; totZ.z3+=s.z3*s.dur/100; totZ.z4+=s.z4*s.dur/100; totZ.z5+=s.z5*s.dur/100; });
+  const totZmin=totZ.z1+totZ.z2+totZ.z3+totZ.z4+totZ.z5;
+  [1,2,3,4,5].forEach(z=>{
+    const pct=totZmin>0?((totZ['z'+z]/totZmin)*100):0;
+    document.getElementById('z'+z+'-bar').style.width=pct.toFixed(1)+'%';
+    document.getElementById('z'+z+'-pct').textContent=pct.toFixed(0)+'%';
+  });
+  // HRV
+  const hrvS=hrvSorted();
+  const todayHrv=BIN_DATA.hrv.find(x=>x.date===todayStr());
+  document.getElementById('hrv-fc').textContent=todayHrv?.fc||'—';
+  document.getElementById('hrv-hrv').textContent=todayHrv?.hrv||'—';
+  const last7=hrvS.slice(-7);
+  const avgFc=last7.filter(x=>x.fc>0).reduce((s,x,_,a)=>s+x.fc/a.length,0);
+  const avgHrv=last7.filter(x=>x.hrv>0).reduce((s,x,_,a)=>s+x.hrv/a.length,0);
+  document.getElementById('hrv-fc-avg').textContent=avgFc>0?avgFc.toFixed(0)+' bpm':'—';
+  document.getElementById('hrv-hrv-avg').textContent=avgHrv>0?avgHrv.toFixed(0)+' ms':'—';
+  const sigEl=document.getElementById('hrv-signal');
+  if(todayHrv&&avgHrv>0){
+    const dH=todayHrv.hrv-avgHrv, dF=todayHrv.fc&&avgFc>0?todayHrv.fc-avgFc:0;
+    let cls,txt;
+    if(dH>5&&dF<3){cls='hs-good';txt='✓ Récupération optimale';}
+    else if(dH>=-5&&dH<=5&&Math.abs(dF)<5){cls='hs-good';txt='✓ État nominal';}
+    else if(dH<-10||dF>10){cls='hs-bad';txt='⚡ Surmenage — réduire charge';}
+    else if(dH<-5||dF>5){cls='hs-warn';txt='~ Fatigue détectée';}
+    else{cls='hs-neu';txt='— Indéterminé';}
+    sigEl.className='hrv-signal '+cls; sigEl.textContent=txt;
+  } else { sigEl.className='hrv-signal hs-neu'; sigEl.textContent='— Pas assez de données'; }
+  spHrvChart(hrvS.slice(-14));
+  // Sessions list
+  const listEl=document.getElementById('sp-sess-list');
+  const recent=[...all].reverse().slice(0,20);
+  if(!recent.length){ listEl.innerHTML='<div class="empty-state">Aucune séance enregistrée.</div>'; return; }
+  const typeTag={'run':'st-run','trail':'st-trail','velo':'st-velo','autre':'st-autre'};
+  const typeLabel={'run':'Course','trail':'Trail','velo':'Vélo','autre':'Autre'};
+  const zCols=['var(--z1)','var(--z2)','var(--z3)','var(--z4)','var(--z5)'];
+  listEl.innerHTML=recent.map(s=>{
+    const zT=s.z1+s.z2+s.z3+s.z4+s.z5;
+    const zN=zT>0?[s.z1,s.z2,s.z3,s.z4,s.z5].map(z=>z/zT*100):[0,0,0,0,0];
+    const zB=zN.map((z,i)=>z>0?`<div class="szb" style="width:${Math.max(3,z*.6).toFixed(0)}px;background:${zCols[i]};"></div>`:'').join('');
+    const meta=[s.km?s.km.toFixed(1)+' km':'',s.dur?s.dur+' min':'',s.fcm?'FC '+s.fcm:'',s.rpe?'RPE '+s.rpe:''].filter(Boolean).join(' · ');
+    return`<div class="sess-entry"><span class="sess-tag ${typeTag[s.type]||'st-autre'}">${typeLabel[s.type]||s.type}</span><div class="sess-info"><div class="sess-title">${fmtDate(s.date)}${s.note?' — '+s.note:''}</div><div class="sess-meta">${meta}</div></div><div class="sess-zbar">${zB}</div><span style="cursor:pointer;color:#7a7870;font-size:11px;margin-left:8px;" onclick="spDel(${s.id})">✕</span></div>`;
+  }).join('');
+}
+
+function spHrvChart(data){
+  const canvas=document.getElementById('hrv-chart');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-36, H=100;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const hasFc=data.some(d=>d.fc>0), hasHrv=data.some(d=>d.hrv>0);
+  if(!data.length||(!hasFc&&!hasHrv)){ ctx.fillStyle='#7a7870'; ctx.font='11px DM Mono,monospace'; ctx.textAlign='center'; ctx.fillText('Saisis tes données matinales pour voir l\'évolution.',W/2,H/2); return; }
+  const n=data.length;
+  const pad={t:10,r:10,b:18,l:38};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const xP=i=>pad.l+(n<=1?cW/2:(i/(n-1))*cW);
+  function drawLine(vals,color){
+    const fv=vals.filter(v=>v>0); if(!fv.length)return;
+    const mn=Math.min(...fv)-5, mx=Math.max(...fv)+5;
+    const yP=v=>pad.t+cH-((v-mn)/(mx-mn))*cH;
+    ctx.fillStyle='#7a7870'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='right';
+    [mn+3,mx-3].forEach(v=>{ if(v>0) ctx.fillText(v.toFixed(0),pad.l-3,yP(v)+3); });
+    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.lineJoin='round';
+    let first=true;
+    vals.forEach((v,i)=>{ if(v>0){ if(first){ctx.moveTo(xP(i),yP(v));first=false;}else ctx.lineTo(xP(i),yP(v)); } });
+    ctx.stroke();
+    vals.forEach((v,i)=>{ if(v>0){ ctx.beginPath(); ctx.fillStyle=color; ctx.arc(xP(i),yP(v),3,0,Math.PI*2); ctx.fill(); } });
+  }
+  if(hasFc) drawLine(data.map(d=>d.fc),'#c46b6b');
+  if(hasHrv) drawLine(data.map(d=>d.hrv),'#4a8fc4');
+  ctx.fillStyle='#7a7870'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(n/5));
+  for(let i=0;i<n;i+=step) ctx.fillText(fmtDate(data[i].date).slice(0,5),xP(i),H-2);
+  ctx.fillStyle='#c46b6b'; ctx.fillRect(W-76,6,10,2);
+  ctx.fillStyle='#7a7870'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='left'; ctx.fillText('FC',W-62,9);
+  ctx.fillStyle='#4a8fc4'; ctx.fillRect(W-42,6,10,2);
+  ctx.fillStyle='#7a7870'; ctx.fillText('HRV',W-28,9);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  BOOT                                                       */
+/* ═══════════════════════════════════════════════════════════ */
+if(CFG){
+  // Config already stored — load data and start
+  document.getElementById('config-overlay').style.display = 'none';
+  binLoad().then(ok => { if(ok) initApp(); });
+} else {
+  // Show config screen
+  document.getElementById('config-overlay').style.display = 'flex';
+}
+
+window.addEventListener('resize',()=>{
+  if(document.getElementById('panel-poids').classList.contains('active')) wChart(wSorted());
+  if(document.getElementById('panel-sport').classList.contains('active')) spRender();
+});
+</script>
+</body>
+</html>
