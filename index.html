@@ -500,7 +500,6 @@ let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || 'null');
 
 // In-memory cache of the full bin
 let BIN_DATA = { weights: [], nutrition: {}, sport: [], hrv: [] };
-let syncTimeout = null;
 
 function binUrl()  { return `https://api.jsonbin.io/v3/b/${CFG.binId}`; }
 function binHeaders(write=false){
@@ -616,7 +615,7 @@ function switchTab(name,btn){
 const W_START=98.5, W_TGT=91, W_RMIN=0.25, W_RMAX=0.5;
 function wSorted(){ return[...BIN_DATA.weights].sort((a,b)=>a.date.localeCompare(b.date)); }
 
-function wAdd(){
+async function wAdd(){
   const d=document.getElementById('w-inp-date').value;
   const w=parseFloat(document.getElementById('w-inp-w').value);
   const note=document.getElementById('w-inp-note').value.trim();
@@ -837,11 +836,11 @@ async function hrvAdd(){
   await binSave(); hrvMsg('Sauvegardé.','ok'); spRender();
 }
 
-function corosImport(input){
+async function corosImport(input){
   const file=input.files[0]; if(!file)return;
   const msgEl=document.getElementById('import-msg');
   const reader=new FileReader();
-  reader.onload=e=>{
+  reader.onload=async e=>{
     try{
       // Parse CSV respecting quoted fields
       function parseCSVLine(line){
