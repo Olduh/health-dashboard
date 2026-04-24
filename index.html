@@ -522,13 +522,14 @@ async function binLoad(){
   try {
     syncIndicator('syncing','Chargement…');
     const r = await fetch(binUrl(), { headers: binHeaders() });
-    if(!r.ok) throw new Error(r.status);
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     BIN_DATA = { weights:[], nutrition:{}, sport:[], hrv:[], ...j.record };
     syncIndicator('done','✓ Synchronisé');
     return true;
   } catch(e) {
-    syncIndicator('error','✗ Erreur de connexion');
+    console.error('binLoad error:', e);
+    syncIndicator('error','✗ Erreur de connexion : ' + e.message);
     return false;
   }
 }
@@ -1065,9 +1066,16 @@ function spHrvChart(data){
 /*  BOOT                                                       */
 /* ═══════════════════════════════════════════════════════════ */
 if(CFG){
-  // Config already stored — load data and start
   document.getElementById('config-overlay').style.display = 'none';
-  binLoad().then(ok => { if(ok) initApp(); });
+  binLoad().then(ok => {
+    if(ok){
+      initApp();
+    } else {
+      // Show config overlay again with error message
+      document.getElementById('config-overlay').style.display = 'flex';
+      document.getElementById('cfg-error').textContent = 'Échec de connexion à JSONBin. Vérifie ta clé et ton Bin ID.';
+    }
+  });
 } else {
   // Show config screen
   document.getElementById('config-overlay').style.display = 'flex';
