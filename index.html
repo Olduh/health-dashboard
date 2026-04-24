@@ -501,11 +501,17 @@ let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || 'null');
 // In-memory cache of the full bin
 let BIN_DATA = { weights: [], nutrition: {}, sport: [], hrv: [] };
 
-function binUrl()  { return `https://api.jsonbin.io/v3/b/${CFG.binId}`; }
+const WORKER_URL = 'https://anthropic-proxy.ghilain-beauplet.workers.dev';
+
+function binUrl()  { return WORKER_URL; }
 function binHeaders(write=false){
-  const h = { 'X-Master-Key': CFG.apiKey, 'Content-Type': 'application/json' };
-  if(!write) h['X-Bin-Meta'] = 'false';
-  return h;
+  return {
+    'Content-Type': 'application/json',
+    'X-Target': 'jsonbin',
+    'X-Bin-Id': CFG.binId,
+    'X-Api-Key': CFG.apiKey,
+    'X-Write': write ? 'true' : 'false',
+  };
 }
 
 function syncIndicator(state, msg=''){
@@ -748,7 +754,7 @@ async function nAnalyze(){
   document.getElementById('n-result').classList.remove('vis');
   const prompt=`Tu es un nutritionniste expert. Analyse ce repas.\nRepas : "${input}"\nRéponds UNIQUEMENT en JSON valide sans backticks :\n{"titre":"Nom court (max 60 chars)","kcal":000,"prot":00,"gluc":00,"lip":00,"note":"Commentaire court (1-2 phrases)"}\nValeurs entières, portions standard françaises si non précisé.`;
   try{
-    const res=await fetch('https://anthropic-proxy.ghilain-beauplet.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://anthropic-proxy.ghilain-beauplet.workers.dev',{method:'POST',headers:{'Content-Type':'application/json','X-Target':'anthropic'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:400,messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     const p=JSON.parse((data.content?.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim());
     nPending={id:Date.now(),type:nMealType,desc:input,titre:p.titre,kcal:parseInt(p.kcal)||0,prot:parseInt(p.prot)||0,gluc:parseInt(p.gluc)||0,lip:parseInt(p.lip)||0,note:p.note||''};
