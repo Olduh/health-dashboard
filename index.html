@@ -527,10 +527,14 @@ function syncIndicator(state, msg=''){
 async function binLoad(){
   try {
     syncIndicator('syncing','Chargement…');
-    const r = await fetch(binUrl(), { headers: binHeaders() });
+    const r = await fetch(binUrl(), { method: 'GET', headers: binHeaders(false) });
     if(!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
-    BIN_DATA = { weights:[], nutrition:{}, sport:[], hrv:[], ...j.record };
+    console.log('binLoad raw response:', JSON.stringify(j).slice(0, 200));
+    // JSONBin via worker returns {record: {...}} or directly {...}
+    const data = j.record || j;
+    BIN_DATA = { weights:[], nutrition:{}, sport:[], hrv:[], ...data };
+    console.log('BIN_DATA weights count:', BIN_DATA.weights.length);
     syncIndicator('done','✓ Synchronisé');
     return true;
   } catch(e) {
