@@ -535,21 +535,18 @@ async function binLoad(){
 }
 
 async function binSave(){
-  clearTimeout(syncTimeout);
-  syncTimeout = setTimeout(async ()=>{
-    try {
-      syncIndicator('syncing','Sauvegarde…');
-      const r = await fetch(binUrl(), {
-        method: 'PUT',
-        headers: binHeaders(true),
-        body: JSON.stringify(BIN_DATA)
-      });
-      if(!r.ok) throw new Error(r.status);
-      syncIndicator('done','✓ Sauvegardé');
-    } catch(e) {
-      syncIndicator('error','✗ Erreur de sauvegarde');
-    }
-  }, 800); // debounce 800ms — regroupe les sauvegardes rapprochées
+  try {
+    syncIndicator('syncing','Sauvegarde…');
+    const r = await fetch(binUrl(), {
+      method: 'PUT',
+      headers: binHeaders(true),
+      body: JSON.stringify(BIN_DATA)
+    });
+    if(!r.ok) throw new Error(r.status);
+    syncIndicator('done','✓ Sauvegardé');
+  } catch(e) {
+    syncIndicator('error','✗ Erreur de sauvegarde');
+  }
 }
 
 /* ── CONFIG ─────────────────────────────────────────────────── */
@@ -628,13 +625,13 @@ function wAdd(){
   const ei=BIN_DATA.weights.findIndex(x=>x.date===d);
   if(ei>=0){BIN_DATA.weights[ei]={date:d,weight:w,note};wMsg2('Mise à jour.','ok');}
   else{BIN_DATA.weights.push({date:d,weight:w,note});wMsg2('Enregistré.','ok');}
-  binSave();
+  await binSave();
   document.getElementById('w-inp-w').value='';
   document.getElementById('w-inp-note').value='';
   wRender();
 }
-function wClear(){ if(!confirm('Effacer tout ?'))return; BIN_DATA.weights=[]; binSave(); wRender(); }
-function wDel(date){ BIN_DATA.weights=BIN_DATA.weights.filter(d=>d.date!==date); binSave(); wRender(); }
+async function wClear(){ if(!confirm('Effacer tout ?'))return; BIN_DATA.weights=[]; await binSave(); wRender(); }
+async function wDel(date){ BIN_DATA.weights=BIN_DATA.weights.filter(d=>d.date!==date); await binSave(); wRender(); }
 function wMsg2(t,c){ const el=document.getElementById('w-msg'); el.textContent=t; el.className=c==='ok'?'msg-ok':'msg-err'; setTimeout(()=>{el.textContent='';el.className='';},3000); }
 
 function wRender(){ const s=wSorted(); wStats(s); wChart(s); wTable(s); }
@@ -766,9 +763,9 @@ async function nAnalyze(){
   }catch(e){ nSt('Erreur d\'analyse.',true); nPending=null; }
   btn.disabled=false; btn.textContent='Analyser →'; btn.classList.remove('loading-dots');
 }
-function nConfirm(){ if(!nPending)return; if(!BIN_DATA.nutrition[nDate])BIN_DATA.nutrition[nDate]=[]; BIN_DATA.nutrition[nDate].push(nPending); binSave(); nPending=null; document.getElementById('n-ta').value=''; document.getElementById('n-result').classList.remove('vis'); nSt(''); nRender(); }
+async function nConfirm(){ if(!nPending)return; if(!BIN_DATA.nutrition[nDate])BIN_DATA.nutrition[nDate]=[]; BIN_DATA.nutrition[nDate].push(nPending); await binSave(); nPending=null; document.getElementById('n-ta').value=''; document.getElementById('n-result').classList.remove('vis'); nSt(''); nRender(); }
 function nDiscard(){ nPending=null; document.getElementById('n-result').classList.remove('vis'); nSt(''); }
-function nDelMeal(id){ if(!BIN_DATA.nutrition[nDate])return; BIN_DATA.nutrition[nDate]=BIN_DATA.nutrition[nDate].filter(m=>m.id!==id); if(!BIN_DATA.nutrition[nDate].length)delete BIN_DATA.nutrition[nDate]; binSave(); nRender(); }
+async function nDelMeal(id){ if(!BIN_DATA.nutrition[nDate])return; BIN_DATA.nutrition[nDate]=BIN_DATA.nutrition[nDate].filter(m=>m.id!==id); if(!BIN_DATA.nutrition[nDate].length)delete BIN_DATA.nutrition[nDate]; await binSave(); nRender(); }
 
 function nRender(){
   const d=new Date(nDate+'T12:00:00');
@@ -807,7 +804,7 @@ function hrvSorted(){ return[...BIN_DATA.hrv].sort((a,b)=>a.date.localeCompare(b
 function spMsg(t,c){ const el=document.getElementById('sp-msg'); el.textContent=t; el.className=c==='ok'?'msg-ok':'msg-err'; setTimeout(()=>{el.textContent='';el.className='';},3000); }
 function hrvMsg(t,c){ const el=document.getElementById('hrv-msg'); el.textContent=t; el.className=c==='ok'?'msg-ok':'msg-err'; setTimeout(()=>{el.textContent='';el.className='';},3000); }
 
-function spAddSession(){
+async function spAddSession(){
   const date=document.getElementById('sp-inp-date').value;
   const type=document.getElementById('sp-inp-type').value;
   const km=parseFloat(document.getElementById('sp-inp-km').value)||0;
@@ -820,14 +817,14 @@ function spAddSession(){
   if(!date){spMsg('Date manquante.','err');return;}
   if(!km&&!dur){spMsg('Distance ou durée requise.','err');return;}
   BIN_DATA.sport.push({id:Date.now(),date,type,km,dur,fcm,fcx,rpe,note,z1:z[0],z2:z[1],z3:z[2],z4:z[3],z5:z[4]});
-  binSave();
+  await binSave();
   ['sp-inp-km','sp-inp-dur','sp-inp-fcm','sp-inp-fcx','sp-inp-rpe','sp-inp-note','zi1','zi2','zi3','zi4','zi5'].forEach(id=>document.getElementById(id).value='');
   spMsg('Séance enregistrée.','ok'); spRender();
 }
-function spClear(){ if(!confirm('Effacer toutes les séances ?'))return; BIN_DATA.sport=[]; binSave(); spRender(); }
-function spDel(id){ BIN_DATA.sport=BIN_DATA.sport.filter(s=>s.id!==id); binSave(); spRender(); }
+async function spClear(){ if(!confirm('Effacer toutes les séances ?'))return; BIN_DATA.sport=[]; await binSave(); spRender(); }
+async function spDel(id){ BIN_DATA.sport=BIN_DATA.sport.filter(s=>s.id!==id); await binSave(); spRender(); }
 
-function hrvAdd(){
+async function hrvAdd(){
   const date=document.getElementById('hrv-inp-date').value;
   const fc=parseInt(document.getElementById('hrv-inp-fc').value)||0;
   const hrv=parseInt(document.getElementById('hrv-inp-hrv').value)||0;
@@ -837,7 +834,7 @@ function hrvAdd(){
   const ei=BIN_DATA.hrv.findIndex(x=>x.date===date);
   if(ei>=0) BIN_DATA.hrv[ei]={date,fc,hrv,sleep};
   else BIN_DATA.hrv.push({date,fc,hrv,sleep});
-  binSave(); hrvMsg('Sauvegardé.','ok'); spRender();
+  await binSave(); hrvMsg('Sauvegardé.','ok'); spRender();
 }
 
 function corosImport(input){
@@ -923,7 +920,7 @@ function corosImport(input){
         note:`Import COROS — ${file.name}`,
         ...z
       });
-      binSave(); spRender();
+      await binSave(); spRender();
       msgEl.style.color='var(--green)';
       msgEl.textContent=`✓ ${km.toFixed(2)} km · ${dur} min · FC moy ${fcm||'—'}`;
 
