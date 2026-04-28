@@ -77,6 +77,44 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 .tab-btn.active.nt{border-bottom-color:var(--green);}
 .tab-btn.active.sp{border-bottom-color:var(--blue);}
 .tab-btn.active.ov{border-bottom-color:#9b7ec8;}
+.tab-btn.active.hb{border-bottom-color:#4a8fc4;}
+
+/* ── HABITS ─────────────────────────────────────────────────── */
+.hb-date-nav{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+.hb-score-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:22px;display:flex;align-items:center;gap:20px;}
+.hb-score-circle{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:22px;font-weight:600;border:3px solid var(--border);flex-shrink:0;}
+.hb-score-info{flex:1;}
+.hb-score-title{font-size:13px;color:var(--text);margin-bottom:4px;}
+.hb-score-sub{font-size:10px;color:var(--muted);}
+.hb-score-dots{display:flex;gap:6px;margin-top:8px;}
+.hb-dot{width:10px;height:10px;border-radius:50%;}
+
+.hb-habits{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.hb-habit{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:16px;transition:border-color .15s;}
+.hb-habit.done{border-color:var(--green);}
+.hb-habit-icon{font-size:20px;flex-shrink:0;}
+.hb-habit-info{flex:1;}
+.hb-habit-name{font-size:12px;color:var(--text);}
+.hb-habit-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.hb-habit-ctrl{display:flex;align-items:center;gap:8px;}
+.hb-toggle{background:none;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:11px;padding:5px 14px;color:var(--muted);font-family:'DM Mono',monospace;transition:all .15s;}
+.hb-toggle.on{background:var(--green);border-color:var(--green);color:#0f0f0e;}
+.hb-stepper{display:flex;align-items:center;gap:6px;}
+.hb-step-btn{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);cursor:pointer;font-size:14px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.hb-step-btn:hover{background:var(--border);}
+.hb-step-val{font-family:'Fraunces',serif;font-size:18px;font-weight:600;min-width:36px;text-align:center;}
+.hb-step-unit{font-size:10px;color:var(--muted);}
+.hb-streak-badge{font-size:10px;padding:2px 7px;border-radius:3px;background:var(--surface2);color:var(--muted);white-space:nowrap;}
+.hb-streak-badge.hot{background:#d4924a20;color:var(--amber);}
+
+.hb-heatmap-section{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:22px;}
+.hb-heatmap-grid{display:grid;gap:3px;margin-top:12px;}
+.hb-heatmap-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.hb-heatmap-label{font-size:10px;color:var(--muted);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hb-heatmap-cells{display:flex;gap:2px;flex:1;}
+.hb-cell{width:12px;height:12px;border-radius:2px;flex-shrink:0;cursor:default;}
+.hb-week-labels{display:flex;gap:2px;margin-left:96px;margin-bottom:4px;}
+.hb-week-lbl{width:12px;font-size:8px;color:var(--muted);text-align:center;}
 
 /* ── OVERVIEW ───────────────────────────────────────────────── */
 .ov-scorecard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
@@ -175,6 +213,8 @@ input[type="date"].dp{background:none;border:1px solid var(--border);border-radi
 .meal-type-row{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;}
 .meal-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;padding:4px 11px;transition:all .15s;}
 .meal-btn:hover,.meal-btn.active{background:var(--green);border-color:var(--green);color:#0f0f0e;}
+.day-type-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;padding:5px 12px;transition:all .15s;}
+.day-type-btn:hover,.day-type-btn.active{background:#d4924a;border-color:#d4924a;color:#0f0f0e;}
 .ai-inp-row{display:flex;gap:9px;align-items:flex-end;}
 .ai-ta{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:9px 11px;outline:none;resize:none;height:56px;transition:border-color .15s;line-height:1.6;}
 .ai-ta:focus{border-color:var(--green);} .ai-ta::placeholder{color:var(--muted);font-style:italic;}
@@ -309,7 +349,7 @@ footer{text-align:center;color:var(--muted);font-size:10px;line-height:2.2;paddi
 <div class="topbar">
   <div class="brand">Dashboard <em>santé</em></div>
   <div class="topbar-right">
-    <div class="topbar-meta">Objectif : 98,5 → 91 kg &nbsp;·&nbsp; 2 100 kcal &nbsp;·&nbsp; FCmax 192</div>
+    <div class="topbar-meta">Objectif : 98,5 → 91 kg &nbsp;·&nbsp; 3 350 kcal &nbsp;·&nbsp; FCmax 192</div>
     <button class="btn-settings" onclick="cfgReset()" title="Reconfigurer">⚙</button>
   </div>
 </div>
@@ -320,6 +360,7 @@ footer{text-align:center;color:var(--muted);font-size:10px;line-height:2.2;paddi
     <button class="tab-btn nt"    onclick="switchTab('nutri',this)">🥗 Nutrition</button>
     <button class="tab-btn sp"    onclick="switchTab('sport',this)">🏃 Sport</button>
     <button class="tab-btn ov"    onclick="switchTab('overview',this)">📊 Vue générale</button>
+    <button class="tab-btn hb"    onclick="switchTab('habits',this)">✅ Habitudes</button>
   </div>
 </div>
 
@@ -330,6 +371,12 @@ footer{text-align:center;color:var(--muted);font-size:10px;line-height:2.2;paddi
     <div class="stat-card"><div class="stat-label">Moy. 7 jours</div><div class="stat-val" id="w-avg">—</div><div class="stat-sub" id="w-trend"></div></div>
     <div class="stat-card"><div class="stat-label">Perdu depuis début</div><div class="stat-val" id="w-lost">—</div><div class="stat-sub" id="w-lost-pct">—</div></div>
     <div class="stat-card"><div class="stat-label">Restant à perdre</div><div class="stat-val" id="w-rem">—</div><div class="stat-sub" id="w-eta">—</div></div>
+  </div>
+  <!-- Predictions + streak row -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;">
+    <div class="stat-card"><div class="stat-label">Prédit J+7</div><div class="stat-val" id="w-pred7" style="font-size:20px;">—</div><div class="stat-sub" id="w-pred7-sub">—</div></div>
+    <div class="stat-card"><div class="stat-label">Prédit J+30</div><div class="stat-val" id="w-pred30" style="font-size:20px;">—</div><div class="stat-sub" id="w-pred30-sub">—</div></div>
+    <div class="stat-card"><div class="stat-label">Streak saisie 🔥</div><div class="stat-val" id="w-streak" style="color:#d4924a;">—</div><div class="stat-sub" id="w-streak-sub">—</div></div>
   </div>
   <div class="prog-wrap">
     <div class="prog-outer"><div class="prog-inner" id="w-prog" style="width:0%"></div></div>
@@ -371,13 +418,25 @@ footer{text-align:center;color:var(--muted);font-size:10px;line-height:2.2;paddi
     <input type="date" class="dp" id="n-dp" onchange="nGoTo(this.value)">
   </div>
   <div class="gauges4">
-    <div class="gauge-card gc-kcal" id="ng-kcal" style="--fill:0%"><div class="g-lbl">Calories</div><div class="g-val"><span id="nv-kcal">0</span><span class="g-unit">kcal</span></div><div class="g-tgt">/ 2 100 kcal</div><div class="g-pct" id="np-kcal">0 %</div></div>
-    <div class="gauge-card gc-prot" id="ng-prot" style="--fill:0%"><div class="g-lbl">Protéines</div><div class="g-val"><span id="nv-prot">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 175 g</div><div class="g-pct" id="np-prot">0 %</div></div>
-    <div class="gauge-card gc-gluc" id="ng-gluc" style="--fill:0%"><div class="g-lbl">Glucides</div><div class="g-val"><span id="nv-gluc">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 215 g</div><div class="g-pct" id="np-gluc">0 %</div></div>
-    <div class="gauge-card gc-lip"  id="ng-lip"  style="--fill:0%"><div class="g-lbl">Lipides</div><div class="g-val"><span id="nv-lip">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 65 g</div><div class="g-pct" id="np-lip">0 %</div></div>
+    <div class="gauge-card gc-kcal" id="ng-kcal" style="--fill:0%"><div class="g-lbl">Calories</div><div class="g-val"><span id="nv-kcal">0</span><span class="g-unit">kcal</span></div><div class="g-tgt">/ 3 350 kcal</div><div class="g-pct" id="np-kcal">0 %</div></div>
+    <div class="gauge-card gc-prot" id="ng-prot" style="--fill:0%"><div class="g-lbl">Protéines</div><div class="g-val"><span id="nv-prot">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 195 g</div><div class="g-pct" id="np-prot">0 %</div></div>
+    <div class="gauge-card gc-gluc" id="ng-gluc" style="--fill:0%"><div class="g-lbl">Glucides</div><div class="g-val"><span id="nv-gluc">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 405 g</div><div class="g-pct" id="np-gluc">0 %</div></div>
+    <div class="gauge-card gc-lip"  id="ng-lip"  style="--fill:0%"><div class="g-lbl">Lipides</div><div class="g-val"><span id="nv-lip">0</span><span class="g-unit">g</span></div><div class="g-tgt">/ 105 g</div><div class="g-pct" id="np-lip">0 %</div></div>
   </div>
   <div class="ai-entry">
     <div class="ai-title">Ajouter un repas <span class="ai-badge">IA</span></div>
+
+    <!-- Day type selector -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;">Type de journée</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;">
+        <button class="day-type-btn active" data-dtype="rest" onclick="nSelDayType(this)">🛋 Repos</button>
+        <button class="day-type-btn" data-dtype="moderate" onclick="nSelDayType(this)">🏃 Entraînement modéré</button>
+        <button class="day-type-btn" data-dtype="intense" onclick="nSelDayType(this)">⚡ Sortie longue/intensif</button>
+      </div>
+      <div id="n-day-targets" style="margin-top:10px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:10px;color:var(--muted);line-height:2;"></div>
+    </div>
+
     <div class="meal-type-row">
       <button class="meal-btn active" data-meal="Petit-déjeuner" onclick="nSelType(this)">Petit-déj.</button>
       <button class="meal-btn" data-meal="Déjeuner" onclick="nSelType(this)">Déjeuner</button>
@@ -441,6 +500,11 @@ footer{text-align:center;color:var(--muted);font-size:10px;line-height:2.2;paddi
     </div>
   </div>
   <div style="margin-bottom:22px;"></div>
+  <!-- Z2 ratio sur 8 semaines -->
+  <div class="vol-card" style="margin-bottom:22px;">
+    <div class="sec-label">Ratio Z2 / total — 8 semaines <span style="color:var(--muted);font-weight:400;">(polarisation entraînement)</span></div>
+    <canvas id="sp-z2-chart" height="120"></canvas>
+  </div>
   <div class="hrv-card" style="margin-bottom:22px;">
     <div class="sec-label">FC repos & HRV — suivi matinal</div>
     <div class="hrv-status">
@@ -563,6 +627,42 @@ footer{text-align:center;color:var(--muted);font-size:10px;line-height:2.2;paddi
 
 </div><!-- /panel-overview -->
 
+<!-- ══════════════════ HABITUDES ═══════════════════════════ -->
+<div id="panel-habits" class="panel">
+
+  <!-- Date nav -->
+  <div class="hb-date-nav">
+    <button class="btn-arrow" onclick="hbShift(-1)">‹</button>
+    <span id="hb-date-lbl" style="font-family:'Fraunces',serif;font-size:20px;font-weight:300;font-style:italic;flex:1;">—</span>
+    <button class="btn-arrow" onclick="hbShift(+1)">›</button>
+    <input type="date" class="dp" id="hb-dp" onchange="hbGoTo(this.value)">
+  </div>
+
+  <!-- Score du jour -->
+  <div class="hb-score-bar">
+    <div class="hb-score-circle" id="hb-circle">0/5</div>
+    <div class="hb-score-info">
+      <div class="hb-score-title" id="hb-score-title">Aucune habitude complétée</div>
+      <div class="hb-score-sub" id="hb-score-sub">—</div>
+      <div class="hb-score-dots" id="hb-score-dots"></div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Streak global</div>
+      <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--amber);" id="hb-global-streak">0j</div>
+    </div>
+  </div>
+
+  <!-- Habitudes du jour -->
+  <div class="hb-habits" id="hb-habits-list"></div>
+
+  <!-- Heatmap 12 semaines -->
+  <div class="hb-heatmap-section">
+    <div class="sec-label">Historique — 12 semaines</div>
+    <div id="hb-heatmap"></div>
+  </div>
+
+</div><!-- /panel-habits -->
+
 <footer>Données synchronisées sur JSONBin · Zones FC Karvonen (FCmax 192, FCrepos 52) · ACWR = charge 7j / moy. 28j</footer>
 
 <script>
@@ -573,7 +673,7 @@ const CFG_KEY = 'healthdash_config_v1';
 let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || 'null');
 
 // In-memory cache of the full bin
-let BIN_DATA = { weights: [], nutrition: {}, sport: [], hrv: [] };
+let BIN_DATA = { weights: [], nutrition: {}, sport: [], hrv: [], habits: {} };
 
 const WORKER_URL = 'https://anthropic-proxy.ghilain-beauplet.workers.dev';
 
@@ -607,7 +707,7 @@ async function binLoad(){
     console.log('binLoad raw response:', JSON.stringify(j).slice(0, 200));
     // JSONBin via worker returns {record: {...}} or directly {...}
     const data = j.record || j;
-    BIN_DATA = { weights:[], nutrition:{}, sport:[], hrv:[], ...data };
+    BIN_DATA = { weights:[], nutrition:{}, sport:[], hrv:[], habits:{}, ...data };
     console.log('BIN_DATA weights count:', BIN_DATA.weights.length);
     syncIndicator('done','✓ Synchronisé');
     return true;
@@ -671,7 +771,9 @@ async function initApp(){
   document.getElementById('sp-inp-date').value = todayStr();
   document.getElementById('hrv-inp-date').value= todayStr();
 
-  wRender(); nRender(); spRender();
+  nUpdateDayTargets(); wRender(); nRender(); spRender();
+  document.getElementById('hb-dp').value=todayStr();
+  hbRender();
 }
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -693,6 +795,7 @@ function switchTab(name,btn){
   if(name==='nutri') nRender();
   if(name==='sport') spRender();
   if(name==='overview') ovRender();
+  if(name==='habits') hbRender();
 }
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -747,6 +850,45 @@ function wStats(s){
   const pct=s.length>0?Math.min(100,Math.max(0,lost/(W_START-W_TGT)*100)):0;
   document.getElementById('w-prog').style.width=pct.toFixed(1)+'%';
   document.getElementById('w-prog-pct').textContent=pct.toFixed(0)+' %';
+
+  // ── Predictions J+7 / J+30 (linear regression on last 30 days) ──
+  const last30w = s.filter(e=>{ const d=new Date(e.date); const ref=new Date(s[s.length-1].date); ref.setDate(ref.getDate()-30); return d>=ref; });
+  if(last30w.length>=5){
+    const origin = new Date(last30w[0].date+'T12:00:00').getTime();
+    const pts30 = last30w.map(e=>({ x:(new Date(e.date+'T12:00:00').getTime()-origin)/86400000, y:e.weight }));
+    const n30=pts30.length, sx=pts30.reduce((s,p)=>s+p.x,0), sy=pts30.reduce((s,p)=>s+p.y,0);
+    const sxy=pts30.reduce((s,p)=>s+p.x*p.y,0), sxx=pts30.reduce((s,p)=>s+p.x*p.x,0);
+    const slope=(n30*sxy-sx*sy)/(n30*sxx-sx*sx);
+    const intercept=(sy-slope*sx)/n30;
+    const lastDay=(new Date(s[s.length-1].date+'T12:00:00').getTime()-origin)/86400000;
+    const pred7=intercept+slope*(lastDay+7);
+    const pred30=intercept+slope*(lastDay+30);
+    const ratePerWeek=slope*7;
+    document.getElementById('w-pred7').textContent=fmtKg(Math.max(W_TGT,pred7));
+    document.getElementById('w-pred7-sub').textContent=`${ratePerWeek<0?'':'+'}${(ratePerWeek).toFixed(2).replace('.',',')} kg/sem`;
+    document.getElementById('w-pred30').textContent=fmtKg(Math.max(W_TGT,pred30));
+    document.getElementById('w-pred30-sub').textContent=`si tendance maintenue`;
+  } else {
+    document.getElementById('w-pred7').textContent='—';
+    document.getElementById('w-pred7-sub').textContent='5 pesées min. sur 30j';
+    document.getElementById('w-pred30').textContent='—';
+    document.getElementById('w-pred30-sub').textContent='—';
+  }
+
+  // ── Streak : jours consécutifs avec pesée + au moins 1 repas ──
+  let streak=0;
+  const today2=todayStr();
+  for(let i=0;;i++){
+    const d=new Date(today2); d.setDate(d.getDate()-i);
+    const dStr=d.toISOString().slice(0,10);
+    const hasPoids=BIN_DATA.weights.some(w=>w.date===dStr);
+    const hasMeals=(BIN_DATA.nutrition[dStr]||[]).length>0;
+    if(hasPoids||hasMeals) streak++;
+    else break;
+    if(i>365) break;
+  }
+  document.getElementById('w-streak').textContent=streak+'j';
+  document.getElementById('w-streak-sub').textContent=streak>=7?'🔥 Série en cours !':streak>0?'Continue !':'Commence aujourd\'hui';
 }
 
 function wChart(s){
@@ -776,16 +918,30 @@ function wChart(s){
   ctx.beginPath(); ctx.moveTo(pad.l,ty); ctx.lineTo(pad.l+cW,ty); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle='#4a8fc4'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='left';
   ctx.fillText('91',pad.l+cW+4,ty+3.5);
-  if(n>=1){
-    const sd=new Date(s[0].date);
-    const days=s.map(d=>(new Date(d.date)-sd)/86400000);
-    const mx=Math.max(...days,30);
+  if(n>=2){
+    // Corridor glissant : basé sur la moyenne mobile du dernier mois
+    const last30 = s.filter(e=>{ const d=new Date(e.date); const ref=new Date(s[n-1].date); ref.setDate(ref.getDate()-30); return d>=ref; });
+    const refWeight = last30.length>=3 ? last30.reduce((sum,e)=>sum+e.weight,0)/last30.length : avgs[avgs.length-1];
+    const startDate = new Date(s[0].date+'T12:00:00');
+    const endDate   = new Date(s[n-1].date+'T12:00:00');
+    const totalDays = Math.max((endDate-startDate)/86400000, 30);
+    // Find x position of refWeight anchor (last 30d midpoint)
+    const anchorDate = last30.length>0 ? new Date(last30[Math.floor(last30.length/2)].date+'T12:00:00') : endDate;
+    const anchorDayOffset = (anchorDate-startDate)/86400000;
     const pts=[];
-    for(let di=0;di<=mx;di++) pts.push({xi:pad.l+(di/mx)*cW,wMin:Math.max(W_TGT,W_START-(di/7)*W_RMAX),wMax:W_START-(di/7)*W_RMIN});
-    ctx.beginPath();
-    pts.forEach((p,i)=>{ if(i===0)ctx.moveTo(p.xi,yP(p.wMax)); else ctx.lineTo(p.xi,yP(p.wMax)); });
-    [...pts].reverse().forEach(p=>ctx.lineTo(p.xi,yP(p.wMin)));
-    ctx.closePath(); ctx.fillStyle='#4a8fc410'; ctx.fill();
+    // Draw corridor forward from anchor to +90 days
+    for(let di=-anchorDayOffset;di<=(totalDays-anchorDayOffset+90);di++){
+      const absDay=anchorDayOffset+di;
+      const xi=pad.l+(absDay/totalDays)*cW;
+      if(xi<pad.l||xi>pad.l+cW) continue;
+      pts.push({xi, wMin:Math.max(W_TGT,refWeight-(di/7)*W_RMAX), wMax:refWeight-(di/7)*W_RMIN});
+    }
+    if(pts.length>=2){
+      ctx.beginPath();
+      pts.forEach((p,i)=>{ if(i===0)ctx.moveTo(p.xi,yP(p.wMax)); else ctx.lineTo(p.xi,yP(p.wMax)); });
+      [...pts].reverse().forEach(p=>ctx.lineTo(p.xi,yP(p.wMin)));
+      ctx.closePath(); ctx.fillStyle='#4a8fc410'; ctx.fill();
+    }
   }
   ctx.fillStyle='#c8b56050';
   ws.forEach((w,i)=>{ ctx.beginPath(); ctx.arc(xP(i),yP(w),3,0,Math.PI*2); ctx.fill(); });
@@ -795,9 +951,24 @@ function wChart(s){
     ctx.stroke();
   }
   if(avgs.length>=1){ const li=avgs.length-1; ctx.beginPath(); ctx.fillStyle='#c8b560'; ctx.arc(xP(li),yP(avgs[li]),5,0,Math.PI*2); ctx.fill(); }
-  const lc=Math.min(n,6), s2=Math.max(1,Math.floor(n/lc));
+
+  // Regular x-axis: one label every ~30 days
   ctx.fillStyle='#7a7870'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='center';
-  for(let i=0;i<n;i+=s2) ctx.fillText(fmtDate(s[i].date).slice(0,5),xP(i),H-6);
+  if(n>=2){
+    const startDate = new Date(s[0].date+'T12:00:00');
+    const endDate   = new Date(s[n-1].date+'T12:00:00');
+    const totalDays = (endDate-startDate)/86400000;
+    const intervalDays = totalDays<=60?7:totalDays<=180?14:30;
+    // Walk regular intervals from start date
+    let cur = new Date(startDate);
+    while(cur<=endDate){
+      const curStr=cur.toISOString().slice(0,10);
+      const dayOffset=(cur-startDate)/86400000;
+      const x=pad.l+(dayOffset/totalDays)*cW;
+      ctx.fillText(fmtDate(curStr).slice(0,5),x,H-6);
+      cur=new Date(cur); cur.setDate(cur.getDate()+intervalDays);
+    }
+  }
 }
 
 function wTable(s){
@@ -816,7 +987,44 @@ function wTable(s){
 /* ═══════════════════════════════════════════════════════════ */
 /*  NUTRITION                                                  */
 /* ═══════════════════════════════════════════════════════════ */
-const N_TGT={kcal:2100,prot:175,gluc:215,lip:65};
+const N_TGT_BASE = {kcal:3350,prot:195,gluc:405,lip:105};
+const N_DAY_TYPES = {
+  rest:     {label:'Repos / récupération',    gluc:[195,290], lip:120, prot:200, kcal:3350},
+  moderate: {label:'Entraînement modéré',     gluc:[290,390], lip:105, prot:195, kcal:3350},
+  intense:  {label:'Sortie longue / intensif',gluc:[485,580], lip:90,  prot:195, kcal:3700},
+};
+let nDayType = 'moderate';
+let N_TGT = {...N_TGT_BASE};
+
+function nSelDayType(btn){
+  document.querySelectorAll('.day-type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  nDayType = btn.dataset.dtype;
+  nUpdateDayTargets();
+  nRender();
+}
+
+function nUpdateDayTargets(){
+  const dt = N_DAY_TYPES[nDayType];
+  N_TGT = {
+    kcal: dt.kcal,
+    prot: dt.prot,
+    gluc: Math.round((dt.gluc[0]+dt.gluc[1])/2),
+    lip:  dt.lip,
+  };
+  const el = document.getElementById('n-day-targets');
+  if(el) el.innerHTML = `<strong style="color:var(--text);">${dt.label}</strong> &nbsp;·&nbsp; `+
+    `Glucides : <strong style="color:var(--gluc);">${dt.gluc[0]}–${dt.gluc[1]} g</strong> &nbsp;·&nbsp; `+
+    `Lipides : <strong style="color:var(--lip);">${dt.lip} g</strong> &nbsp;·&nbsp; `+
+    `Protéines : <strong style="color:var(--prot);">${dt.prot} g</strong> &nbsp;·&nbsp; `+
+    `Kcal cible : <strong style="color:var(--text);">${dt.kcal}</strong>`;
+  // Update gauge targets display
+  const gTgts = {kcal:dt.kcal, prot:dt.prot, gluc:Math.round((dt.gluc[0]+dt.gluc[1])/2), lip:dt.lip};
+  ['kcal','prot','gluc','lip'].forEach(k=>{
+    const el2=document.querySelector(`#ng-${k} .g-tgt`);
+    if(el2) el2.textContent='/ '+gTgts[k]+(k==='kcal'?' kcal':' g');
+  });
+}
 let nDate=todayStr(), nMealType='Petit-déjeuner', nPending=null;
 function nShift(n){ const d=new Date(nDate); d.setDate(d.getDate()+n); nDate=d.toISOString().slice(0,10); nRender(); }
 function nGoTo(v){ if(v){nDate=v;nRender();} }
@@ -1099,6 +1307,7 @@ function spRender(){
     sigEl.className='hrv-signal '+cls; sigEl.textContent=txt;
   } else { sigEl.className='hrv-signal hs-neu'; sigEl.textContent='— Pas assez de données'; }
   spHrvChart(hrvS.slice(-14));
+  spZ2Chart();
   // Sessions list
   const listEl=document.getElementById('sp-sess-list');
   const recent=[...all].reverse().slice(0,20);
@@ -1151,6 +1360,67 @@ function spHrvChart(data){
   ctx.fillStyle='#7a7870'; ctx.fillText('HRV',W-28,9);
 }
 
+function spZ2Chart(){
+  const canvas=document.getElementById('sp-z2-chart');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-36, H=120;
+  canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  const today=new Date(todayStr()+'T12:00:00');
+  const dow=(today.getDay()+6)%7;
+  const wkStart=new Date(today); wkStart.setDate(today.getDate()-dow);
+  const weeks=[];
+  for(let w=7;w>=0;w--){
+    const ws=new Date(wkStart); ws.setDate(ws.getDate()-w*7);
+    const we=new Date(ws); we.setDate(ws.getDate()+6);
+    const wsStr=ws.toISOString().slice(0,10), weStr=we.toISOString().slice(0,10);
+    const sess=spSorted().filter(s=>s.date>=wsStr&&s.date<=weStr);
+    let totMin=0, z2Min=0;
+    sess.forEach(s=>{ totMin+=s.dur; z2Min+=s.z2*s.dur/100; });
+    const ratio=totMin>0?z2Min/totMin*100:null;
+    const lbl=ws.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}).replace(' ','/');
+    weeks.push({ratio,totMin,lbl,isCurrent:w===0});
+  }
+  const hasData=weeks.some(w=>w.ratio!==null);
+  if(!hasData){
+    ctx.fillStyle='#7a7870'; ctx.font='11px DM Mono,monospace'; ctx.textAlign='center';
+    ctx.fillText('Enregistre des séances avec répartition zones pour voir ce graphique.',W/2,H/2); return;
+  }
+  const pad={t:14,r:12,b:28,l:40};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const n=weeks.length, bW=Math.floor(cW/n*0.5);
+  const y80=pad.t+cH-(80/100)*cH;
+  ctx.strokeStyle='#6db38840'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l,y80); ctx.lineTo(pad.l+cW,y80); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#6db388'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='left';
+  ctx.fillText('80%',pad.l+2,y80-3);
+  [0,25,50,75,100].forEach(v=>{
+    const y=pad.t+cH-(v/100)*cH;
+    ctx.strokeStyle='#2a2a28'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cW,y); ctx.stroke();
+    ctx.fillStyle='#7a7870'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(v+'%',pad.l-4,y+3);
+  });
+  weeks.forEach((w,i)=>{
+    if(w.ratio===null) return;
+    const cx=pad.l+(i+0.5)*(cW/n);
+    const barH=(w.ratio/100)*cH;
+    const isGood=w.ratio>=65;
+    const col=w.isCurrent?(isGood?'var(--green)':'var(--amber)'):(isGood?'#6db38870':'#d4924a70');
+    ctx.fillStyle=col; ctx.fillRect(cx-bW/2,pad.t+cH-barH,bW,barH);
+    ctx.fillStyle='#7a7870'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='center';
+    if(barH>12) ctx.fillText(w.ratio.toFixed(0)+'%',cx,pad.t+cH-barH-3);
+  });
+  ctx.fillStyle='#7a7870'; ctx.font='9px DM Mono,monospace';
+  weeks.forEach((w,i)=>{
+    const cx=pad.l+(i+0.5)*(cW/n);
+    ctx.fillStyle=w.isCurrent?'var(--text)':'#7a7870';
+    ctx.textAlign='center'; ctx.fillText(w.lbl,cx,H-6);
+  });
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 /*  OVERVIEW                                                   */
 /* ═══════════════════════════════════════════════════════════ */
@@ -1178,12 +1448,12 @@ function ovRender(){
   const kcalDays = last7.map(d=>(BIN_DATA.nutrition[d]||[]).reduce((s,m)=>s+m.kcal,0)).filter(v=>v>0);
   const kcalAvg = kcalDays.length>0 ? Math.round(kcalDays.reduce((s,v)=>s+v,0)/kcalDays.length) : null;
   document.getElementById('ovv-kcal').textContent = kcalAvg ? kcalAvg+' kcal' : '—';
-  const deficit = kcalAvg ? 2100-kcalAvg : null;
+  const deficit = kcalAvg ? 3350-kcalAvg : null;
   const deficitEl = document.getElementById('ovs-kcal');
   if(deficit!==null){
     deficitEl.innerHTML = `<span class="ov-badge" style="background:${deficit>0?'#6db38820':'#c46b6b20'};color:${deficit>0?'var(--green)':'var(--red)'};">${deficit>0?'−'+deficit+' kcal déficit':'+'+Math.abs(deficit)+' kcal excès'}</span>`;
   } else deficitEl.textContent = '—';
-  document.getElementById('ov-kcal').style.setProperty('--fill', kcalAvg ? Math.min(100,(kcalAvg/2100)*100).toFixed(1)+'%' : '0%');
+  document.getElementById('ov-kcal').style.setProperty('--fill', kcalAvg ? Math.min(100,(kcalAvg/3350)*100).toFixed(1)+'%' : '0%');
 
   // Sport sem courante
   const wkStart = new Date(today); wkStart.setDate(today.getDate()-dow);
@@ -1223,7 +1493,7 @@ function ovRender(){
     const hasSport  = BIN_DATA.sport.some(s=>s.date===d);
     const hasHrv    = BIN_DATA.hrv.some(h=>h.date===d);
     const kcalDay   = (BIN_DATA.nutrition[d]||[]).reduce((s,m)=>s+m.kcal,0);
-    const kcalOver  = kcalDay>2100;
+    const kcalOver  = kcalDay>3350;
     return `<div class="day-cell${isToday?' today':''}">
       <div class="dc-day">${lbl}</div>
       <div class="dc-dots">
@@ -1363,21 +1633,21 @@ function ovChartKcalPoids(){
     ctx.fillText(v.toFixed(1),pad.l-4,y+3);
   }
 
-  // Target line at 2100 kcal
-  const tx=xP(2100);
+  // Target line at 3350 kcal
+  const tx=xP(3350);
   if(tx>=pad.l&&tx<=pad.l+cW){
     ctx.strokeStyle='#6db38840'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
     ctx.beginPath(); ctx.moveTo(tx,pad.t); ctx.lineTo(tx,pad.t+cH); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle='#6db388'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='left';
-    ctx.fillText('2100',tx+3,pad.t+10);
+    ctx.fillText('3350',tx+3,pad.t+10);
   }
 
   // Scatter dots colored by date (older=dim, recent=bright)
   pts.forEach((p,i)=>{
     const alpha=0.3+(i/pts.length)*0.7;
     ctx.beginPath();
-    ctx.fillStyle=p.kcal>2100?`rgba(196,98,45,${alpha})`:`rgba(109,179,136,${alpha})`;
+    ctx.fillStyle=p.kcal>3350?`rgba(196,98,45,${alpha})`:`rgba(109,179,136,${alpha})`;
     ctx.arc(xP(p.kcal),yP(p.weight),4,0,Math.PI*2);
     ctx.fill();
   });
@@ -1403,7 +1673,7 @@ function ovChartDeficit(){
   canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
   ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
 
-  // Build weekly: avg daily deficit (2100-kcal) + actual weight change
+  // Build weekly: avg daily deficit (3350-kcal) + actual weight change
   const today=new Date(todayStr()+'T12:00:00');
   const dow=(today.getDay()+6)%7;
   const wkStart=new Date(today); wkStart.setDate(today.getDate()-dow);
@@ -1420,7 +1690,7 @@ function ovChartDeficit(){
       if(k>0) kcalDays.push(k);
     }
     const avgKcal=kcalDays.length>0?kcalDays.reduce((s,v)=>s+v,0)/kcalDays.length:null;
-    const deficitPerDay=avgKcal!==null?2100-avgKcal:null;
+    const deficitPerDay=avgKcal!==null?3350-avgKcal:null;
     // Theoretical weight loss: 7700 kcal = 1kg
     const theoreticalLoss=deficitPerDay!==null?(deficitPerDay*7/7700):null;
     // Actual weight change
@@ -1485,6 +1755,191 @@ function ovChartDeficit(){
   ctx.fillStyle='#7a7870'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='left'; ctx.fillText('Théorique',22,13);
   ctx.fillStyle='#6db38880'; ctx.fillRect(90,6,10,8);
   ctx.fillStyle='#7a7870'; ctx.fillText('Réel',104,13);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  HABITS                                                     */
+/* ═══════════════════════════════════════════════════════════ */
+// habits stored in BIN_DATA.habits: { 'YYYY-MM-DD': { eau: 2.0, deconnexion: true, legumes: true, sucre: true, etirements: true } }
+
+const HB_DEFS = [
+  { id:'eau',        icon:'💧', name:'Eau',                  sub:'Paliers de 0,25 L — cible 2 L',     type:'stepper', step:0.25, unit:'L',  target:2,    max:4   },
+  { id:'deconnexion',icon:'📵', name:'Déconnexion',          sub:'Temps de déconnexion numérique',     type:'bool',    target:true },
+  { id:'legumes',    icon:'🥦', name:'Légumes & fruits',     sub:'≥ 5 portions dans la journée',       type:'bool',    target:true },
+  { id:'sucre',      icon:'🍬', name:'Sans sucre ajouté',    sub:'Pas de sucre raffiné dans la journée',type:'bool',   target:true },
+  { id:'etirements', icon:'🧘', name:'Étirements post-effort',sub:'Au moins 10 min d\'étirements',    type:'bool',    target:true },
+];
+
+let hbDate = todayStr();
+
+function hbShift(n){ const d=new Date(hbDate); d.setDate(d.getDate()+n); hbDate=d.toISOString().slice(0,10); hbRender(); }
+function hbGoTo(v){ if(v){ hbDate=v; hbRender(); } }
+
+function hbGetDay(date){ return BIN_DATA.habits?.[date] || {}; }
+
+function hbSetVal(id, val){
+  if(!BIN_DATA.habits) BIN_DATA.habits={};
+  if(!BIN_DATA.habits[hbDate]) BIN_DATA.habits[hbDate]={};
+  BIN_DATA.habits[hbDate][id] = val;
+  binSave();
+  hbRender();
+}
+
+function hbToggle(id){
+  const cur = hbGetDay(hbDate)[id] || false;
+  hbSetVal(id, !cur);
+}
+
+function hbStep(id, delta){
+  const def = HB_DEFS.find(h=>h.id===id);
+  const cur = hbGetDay(hbDate)[id] || 0;
+  const next = Math.max(0, Math.min(def.max, Math.round((cur+delta)*100)/100));
+  hbSetVal(id, next);
+}
+
+function hbIsDone(id, date){
+  const def = HB_DEFS.find(h=>h.id===id);
+  const val = hbGetDay(date)[id];
+  if(def.type==='bool') return val===true;
+  if(def.type==='stepper') return (val||0) >= def.target;
+  return false;
+}
+
+function hbStreak(id){
+  let streak=0;
+  const ref = new Date(todayStr()+'T12:00:00');
+  for(let i=0;i<365;i++){
+    const d=new Date(ref); d.setDate(d.getDate()-i);
+    const dStr=d.toISOString().slice(0,10);
+    if(hbIsDone(id,dStr)) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function hbGlobalStreak(){
+  let streak=0;
+  const ref=new Date(todayStr()+'T12:00:00');
+  for(let i=0;i<365;i++){
+    const d=new Date(ref); d.setDate(d.getDate()-i);
+    const dStr=d.toISOString().slice(0,10);
+    const score=HB_DEFS.filter(h=>hbIsDone(h.id,dStr)).length;
+    if(score>=3) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function hbRender(){
+  if(!BIN_DATA.habits) BIN_DATA.habits={};
+  const d=new Date(hbDate+'T12:00:00');
+  document.getElementById('hb-date-lbl').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('hb-dp').value=hbDate;
+
+  const dayData=hbGetDay(hbDate);
+  const score=HB_DEFS.filter(h=>hbIsDone(h.id,hbDate)).length;
+  const total=HB_DEFS.length;
+
+  // Score circle
+  const pct=score/total;
+  const col=pct>=0.8?'var(--green)':pct>=0.5?'var(--amber)':'var(--red)';
+  const circ=document.getElementById('hb-circle');
+  circ.textContent=`${score}/${total}`;
+  circ.style.borderColor=col;
+  circ.style.color=col;
+
+  const titles=['Aucune habitude complétée','Bon début','À mi-chemin','Presque parfait !','Très bonne journée !','Journée parfaite ! 🌟'];
+  document.getElementById('hb-score-title').textContent=titles[score]||titles[0];
+  document.getElementById('hb-score-sub').textContent=hbDate===todayStr()?'Aujourd\'hui':'—';
+
+  // Dots
+  document.getElementById('hb-score-dots').innerHTML=HB_DEFS.map(h=>{
+    const done=hbIsDone(h.id,hbDate);
+    return `<div class="hb-dot" style="background:${done?'var(--green)':'var(--border)'};" title="${h.name}"></div>`;
+  }).join('');
+
+  // Global streak
+  const gs=hbGlobalStreak();
+  document.getElementById('hb-global-streak').textContent=gs+'j';
+
+  // Habits list
+  document.getElementById('hb-habits-list').innerHTML=HB_DEFS.map(h=>{
+    const done=hbIsDone(h.id,hbDate);
+    const streak=hbStreak(h.id);
+    let ctrl='';
+    if(h.type==='bool'){
+      ctrl=`<button class="hb-toggle${done?' on':''}" onclick="hbToggle('${h.id}')">${done?'✓ Fait':'À faire'}</button>`;
+    } else if(h.type==='stepper'){
+      const val=dayData[h.id]||0;
+      const bars=Math.floor(val/h.step);
+      const maxBars=Math.floor(h.max/h.step);
+      const barsHtml=Array.from({length:maxBars},(_,i)=>
+        `<div style="width:8px;height:20px;border-radius:2px;background:${i<bars?(done?'var(--green)':'var(--blue)'):'var(--border)'};"></div>`
+      ).join('');
+      ctrl=`<div class="hb-stepper">
+        <button class="hb-step-btn" onclick="hbStep('${h.id}',-${h.step})">−</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+          <div style="display:flex;gap:2px;align-items:flex-end;">${barsHtml}</div>
+          <div style="display:flex;align-items:baseline;gap:3px;"><span class="hb-step-val">${val.toFixed(2).replace(/\.?0+$/,'').replace('.',',')}</span><span class="hb-step-unit">${h.unit}</span></div>
+        </div>
+        <button class="hb-step-btn" onclick="hbStep('${h.id}',${h.step})">+</button>
+      </div>`;
+    }
+    return `<div class="hb-habit${done?' done':''}">
+      <div class="hb-habit-icon">${h.icon}</div>
+      <div class="hb-habit-info">
+        <div class="hb-habit-name">${h.name}</div>
+        <div class="hb-habit-sub">${h.sub}</div>
+      </div>
+      <div class="hb-habit-ctrl">
+        ${ctrl}
+        <div class="hb-streak-badge${streak>=3?' hot':''}">🔥 ${streak}j</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Heatmap 12 weeks
+  hbRenderHeatmap();
+}
+
+function hbRenderHeatmap(){
+  const today=new Date(todayStr()+'T12:00:00');
+  const dow=(today.getDay()+6)%7;
+  // Start from 12 weeks ago Monday
+  const start=new Date(today); start.setDate(today.getDate()-dow-11*7);
+  const totalDays=84; // 12 weeks
+
+  // Week labels
+  const weekLabels=[];
+  for(let w=0;w<12;w++){
+    const d=new Date(start); d.setDate(start.getDate()+w*7);
+    weekLabels.push(d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}).replace(' ','/'));
+  }
+
+  let html=`<div class="hb-week-labels">${weekLabels.map(l=>`<div style="width:${Math.floor(100/12)}%;font-size:8px;color:var(--muted);text-align:left;">${l}</div>`).join('')}</div>`;
+
+  HB_DEFS.forEach(h=>{
+    const cells=[];
+    for(let i=0;i<totalDays;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i);
+      const dStr=d.toISOString().slice(0,10);
+      const done=hbIsDone(h.id,dStr);
+      const isToday=dStr===todayStr();
+      const isFuture=d>today;
+      let bg;
+      if(isFuture) bg='transparent';
+      else if(done) bg='var(--green)';
+      else if(dStr in (BIN_DATA.habits||{})) bg='var(--surface2)';
+      else bg='var(--border)';
+      cells.push(`<div class="hb-cell" style="background:${bg};${isToday?'outline:1px solid var(--text);':''}" title="${dStr}"></div>`);
+    }
+    html+=`<div class="hb-heatmap-row">
+      <div class="hb-heatmap-label">${h.icon} ${h.name}</div>
+      <div class="hb-heatmap-cells">${cells.join('')}</div>
+    </div>`;
+  });
+
+  document.getElementById('hb-heatmap').innerHTML=html;
 }
 
 /* ═══════════════════════════════════════════════════════════ */
